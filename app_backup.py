@@ -21,7 +21,6 @@ from werkzeug.utils import secure_filename
 import supabase_client  # 用 supabase_client.get_traders 代替
 from supabase import Client as SupabaseClient
 
-
 # Flask应用配置
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here')
@@ -33,10 +32,8 @@ load_dotenv()
 # Supabase配置（改为环境变量读取）
 url = os.getenv('SUPABASE_URL')
 key = os.getenv('SUPABASE_KEY')
-Web_Trader_UUID=os.getenv('Web_Trader_UUID')
 assert url, "SUPABASE_URL 环境变量未设置"
 assert key, "SUPABASE_KEY 环境变量未设置"
-assert Web_Trader_UUID, "Web_Trader_UUID 环境变量未设置"
 supabase = create_client(url, key)
 
 # 股票图片映射
@@ -108,59 +105,28 @@ def format_date_for_db(dt):
         eastern = pytz.timezone('America/New_York')
         dt = eastern.localize(dt)
     return dt.astimezone(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S.%f+00:00')
-India_price_List=dict()
 
-def get_India_price():
-    token = "jggf1-iglcjq-ykgka"
-    url = "http://india-api.allyjp.site/exchange-whitezzzs/lhms-api/list?token=jggf1-iglcjq-ykgka"
-    try:
-        resp = requests.get(url, timeout=15)
-        data = resp.json()
-        sdata=data["data"]
-        for item in sdata:
-            try:
-                global India_price_List
-                India_price_List[item["co"].split(".")[0]]=item["a"]
-               
-            except Exception as e:
-                ...
-       
-        
-    except Exception as e:
-        return None
-
-def get_real_time_price(market,symbol, asset_type=None):
+def get_real_time_price(symbol, asset_type=None):
     symbol = str(symbol).upper().split(":")[0]
-    if market.lower()=="usa": #获取美国股票价格
-        api_key = "YIQDtez6a6OhyWsg2xtbRbOUp3Akhlp4"
-        # 加密货币部分略...
-        # 股票查法兜底：asset_type为stock或未传但symbol像股票代码
-        if (asset_type and ("stock" in asset_type.lower())) or (not asset_type and symbol.isalpha() and 2 <= len(symbol) <= 5):
-            url = f"https://api.polygon.io/v2/last/trade/{symbol}?apiKey={api_key}"
-            try:
-                resp = requests.get(url, timeout=5)
-                data = resp.json()
-                price = None
-                if data.get("results") and "p" in data["results"]:
-                    price = data["results"]["p"]
-                elif data.get("last") and "price" in data["last"]:
-                    price = data["last"]["price"]
-                if price is not None:
-                    return float(price)
-            except Exception as e:
-                return None
-        # 默认返回None
-        return None
-    else: #获取印度股票价格
+    api_key = "YIQDtez6a6OhyWsg2xtbRbOUp3Akhlp4"
+    # 加密货币部分略...
+    # 股票查法兜底：asset_type为stock或未传但symbol像股票代码
+    if (asset_type and ("stock" in asset_type.lower())) or (not asset_type and symbol.isalpha() and 2 <= len(symbol) <= 5):
+        url = f"https://api.polygon.io/v2/last/trade/{symbol}?apiKey={api_key}"
         try:
-         
-            price_value=India_price_List[symbol]
-            return price_value
+            resp = requests.get(url, timeout=5)
+            data = resp.json()
+            price = None
+            if data.get("results") and "p" in data["results"]:
+                price = data["results"]["p"]
+            elif data.get("last") and "price" in data["last"]:
+                price = data["last"]["price"]
+            if price is not None:
+                return float(price)
         except Exception as e:
-                return None
-
-
-
+            return None
+    # 默认返回None
+    return None
 
 def get_historical_data(symbol):
     """获取历史数据"""
@@ -197,13 +163,13 @@ def get_next_whatsapp_agent(device_fingerprint):
     try:
         # 测试数据库连接
         try:
-            test_query = supabase.table('whatsapp_agents').select('count').eq("trader_uuid",Web_Trader_UUID).execute()
+            test_query = supabase.table('whatsapp_agents').select('count').execute()
         except Exception as db_error:
             return None
         
         # 检查是否已有分配记录
         try:
-            existing_record = supabase.table('contact_records').select('*').eq('device_fingerprint', device_fingerprint).eq("trader_uuid",Web_Trader_UUID).execute()
+            existing_record = supabase.table('contact_records').select('*').eq('device_fingerprint', device_fingerprint).execute()
         except Exception as e:
             return None
         
@@ -218,7 +184,7 @@ def get_next_whatsapp_agent(device_fingerprint):
         
         # 获取所有客服
         try:
-            agents = supabase.table('whatsapp_agents').select('*').eq('is_active', True).eq("trader_uuid",Web_Trader_UUID).execute()
+            agents = supabase.table('whatsapp_agents').select('*').eq('is_active', True).execute()
             if not agents.data:
                 return None
         except Exception as e:
@@ -226,7 +192,7 @@ def get_next_whatsapp_agent(device_fingerprint):
             
         # 获取所有分配记录，只取agent_id
         try:
-            assignments = supabase.table('contact_records').select('agent_id').eq("trader_uuid",Web_Trader_UUID).execute()
+            assignments = supabase.table('contact_records').select('agent_id').execute()
             assignment_counts = {}
             for record in assignments.data:
                 agent_id = record['agent_id']
@@ -252,8 +218,7 @@ def get_next_whatsapp_agent(device_fingerprint):
                     'agent_id': selected_agent['id'],
                     'ip_address': request.remote_addr,
                     'user_agent': request.headers.get('User-Agent', ''),
-                    'timestamp': datetime.now(pytz.UTC).isoformat(),
-                    'trader_uuid':Web_Trader_UUID
+                    'timestamp': datetime.now(pytz.UTC).isoformat()
                 }
                 insert_result = supabase.table('contact_records').insert(insert_data).execute()
             except Exception as e:
@@ -310,12 +275,10 @@ def get_whatsapp_link():
 @app.route('/')
 def index():
     try:
-       
         # 获取交易数据
-        response = supabase.table('trades1').select("*").eq("trader_uuid",Web_Trader_UUID).execute()
+        response = supabase.table('trades1').select("*").execute()
         trades = response.data
-        Response=supabase.table("trade_market").select("*").execute()
-        marketdata=Response.data
+
         if not trades:
             trades = []
         
@@ -347,7 +310,7 @@ def index():
                     except:
                         trade['original_entry_date'] = datetime.min
                 trade['entry_date'] = format_datetime(trade['entry_date'])
-            trade["currency"]=getexchange_unit(marketdata,trade.get('trade_market'))
+            
             # 优先使用数据库中的 image_url，否则用 STOCK_IMAGES
             trade['image_url'] = trade.get('image_url') or STOCK_IMAGES.get(trade['symbol'], '')
             
@@ -356,7 +319,7 @@ def index():
             
             # 如果没有current_price，获取实时价格
             if 'current_price' not in trade or not trade['current_price']:
-                current_price = get_real_time_price(trade["trade_market"],trade['symbol'])
+                current_price = get_real_time_price(trade['symbol'])
                 if current_price:
                     trade['current_price'] = current_price
                     # 更新数据库中的价格
@@ -369,13 +332,13 @@ def index():
                         pass
             
             # 计算当前市值和盈亏
-            trade['current_amount'] = trade['current_price'] * trade['size']*trade['direction'] if trade.get('current_price') else trade['entry_amount']
+            trade['current_amount'] = trade['current_price'] * trade['size'] if trade.get('current_price') else trade['entry_amount']
             
             # 计算盈亏
             if trade.get('exit_price'):
-                trade['profit_amount'] = (trade['exit_price'] - trade['entry_price']) * trade['size']*trade['direction']
+                trade['profit_amount'] = (trade['exit_price'] - trade['entry_price']) * trade['size']
             else:
-                trade['profit_amount'] = (trade['current_price'] - trade['entry_price']) * trade['size'] *trade['direction'] if trade.get('current_price') else 0
+                trade['profit_amount'] = (trade['current_price'] - trade['entry_price']) * trade['size'] if trade.get('current_price') else 0
             
             # 计算盈亏比例
             trade['profit_ratio'] = (trade['profit_amount'] / trade['entry_amount']) * 100 if trade['entry_amount'] else 0
@@ -413,18 +376,11 @@ def index():
                                if t.get('exit_date') 
                                and t['exit_date'].split('-')[1] == current_month.split('-')[1]]
         
-        #monthly_profit = sum(t.get('profit_amount', 0) for t in monthly_closed_trades)
-        monthly_profit=0
-        for item in monthly_closed_trades:
-            if item['exit_date']:
-                exchange_rate= float(getexchange_rate(marketdata,item.get('trade_market')))
-                profit_amount=item['profit_amount']
-                monthly_profit+=profit_amount/exchange_rate
+        monthly_profit = sum(t.get('profit_amount', 0) for t in monthly_closed_trades)
+
         # 获取交易员信息
-        profile_response = supabase.table('trader_profiles').select("*").eq("trader_uuid",Web_Trader_UUID).limit(1).execute()
+        profile_response = supabase.table('trader_profiles').select("*").limit(1).execute()
         trader_info = profile_response.data[0] if profile_response.data else {
-            'website_title': 'Professional Trader',
-            'home_top_title': 'Professional Trader',
             'trader_name': 'Professional Trader',
             'professional_title': 'Financial Trading Expert | Technical Analysis Master',
             'bio': 'Focused on US stock market technical analysis and quantitative trading',
@@ -432,28 +388,20 @@ def index():
         }
         
         # 获取最新的交易策略
-        strategy_response = supabase.table('trading_strategies').select("*").eq("trader_uuid",Web_Trader_UUID).order('updated_at', desc=True).limit(1).execute()
+        strategy_response = supabase.table('trading_strategies').select("*").order('updated_at', desc=True).limit(1).execute()
         strategy_info = strategy_response.data[0] if strategy_response.data else {
             'market_analysis': 'Today\'s market shows an upward trend with strong performance in the tech sector. Focus on AI-related stocks...',
             'trading_focus': ['Tech Sector: AI, Chips, Cloud Computing', 'New Energy: Solar, Energy Storage, Hydrogen', 'Healthcare: Innovative Drugs, Medical Devices'],
             'risk_warning': 'High market volatility, please control position size and set stop loss...',
             'updated_at': datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S.%f+00:00')
         }
-      
-        total_profit=0
-        for item in trades:
-            if item['exit_date']:
-                exchange_rate= float(getexchange_rate(marketdata,item.get('trade_market')))
-                profit_amount=item['profit_amount']
-                total_profit+=profit_amount/exchange_rate
-        # # 计算总利润
-        # total_profit = sum(t.get('profit_amount', 0) for t in sorted_trades)
+        
+        # 计算总利润
+        total_profit = sum(t.get('profit_amount', 0) for t in sorted_trades)
 
         # 设置个人信息
         trader_info = {
             'trader_name': trader_info.get('trader_name', 'Professional Trader'),
-            'website_title': trader_info.get('website_title', 'Professional Trader'),
-            'home_top_title': trader_info.get('home_top_title', 'Professional Trader'),
             'professional_title': trader_info.get('professional_title', 'Financial Trading Expert | Technical Analysis Master'),
             'bio': trader_info.get('bio', 'Focused on US stock market technical analysis and quantitative trading'),
             'positions': positions,
@@ -462,7 +410,7 @@ def index():
             'total_profit': round(total_profit, 2),
             'strategy_info': strategy_info,
             # 固定头像
-            'profile_image_url': trader_info.get('profile_image_url', 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg')
+            'profile_image_url': 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'
         }
         
         return render_template('index.html', 
@@ -477,9 +425,9 @@ def index():
 def trader_profile():
     try:
         # 获取个人资料
-        response = supabase.table('trader_profiles').select('*').eq("trader_uuid",Web_Trader_UUID).limit(1).execute()
+        response = supabase.table('trader_profiles').select('*').limit(1).execute()
         # 获取trades表中的记录数
-        trades_response = supabase.table('trades1').select('id').eq("trader_uuid",Web_Trader_UUID).execute()
+        trades_response = supabase.table('trades1').select('id').execute()
         trades_count = len(trades_response.data) if trades_response.data else 0
         if response.data:
             profile = response.data[0]
@@ -566,26 +514,23 @@ def get_avatar():
 
 @app.route('/api/price')
 def api_price():
-    trade_market=request.args.get('market')
     symbol = request.args.get('symbol')
     trade_id = request.args.get('trade_id')
     asset_type = None
-    Direction=1
+
     # 优先用trade_id查表获取asset_type和symbol
     if trade_id:
         # 先查vip_trades表
-        trade = supabase.table('vip_trades').select('asset_type,symbol,direction').eq('id', trade_id).execute()
+        trade = supabase.table('vip_trades').select('asset_type,symbol').eq('id', trade_id).execute()
         if trade.data:
             asset_type = trade.data[0].get('asset_type')
             symbol = trade.data[0].get('symbol')
-            Direction= trade.data[0].get('direction')
         else:
             # 可选：查trades1等其他表
-            trade = supabase.table('trades1').select('asset_type,symbol,Direction').eq('id', trade_id).execute()
+            trade = supabase.table('trades1').select('asset_type,symbol').eq('id', trade_id).execute()
             if trade.data:
                 asset_type = trade.data[0].get('asset_type')
                 symbol = trade.data[0].get('symbol')
-                Direction= trade.data[0].get('Direction')
     else:
         # 没有trade_id时，symbol必须有，asset_type可选
         asset_type = request.args.get('asset_type')
@@ -593,9 +538,9 @@ def api_price():
     if not symbol:
         return jsonify({'success': False, 'message': 'No symbol provided'}), 400
 
-    price = get_real_time_price(trade_market,symbol, asset_type)
+    price = get_real_time_price(symbol, asset_type)
     if price is not None:
-        return jsonify({'success': True, 'price': float(price),'Direction':Direction})
+        return jsonify({'success': True, 'price': float(price)})
     else:
         return jsonify({'success': False, 'message': 'Failed to get price'}), 500
 
@@ -660,8 +605,6 @@ def vip():
         }
         trades = []
         initial_asset = 0
-    Response=supabase.table("trade_market").select("*").execute()
-    marketdata=Response.data
     # 计算dynamic_total_asset
     total_market_value = 0
     holding_cost = 0
@@ -671,49 +614,21 @@ def vip():
         exit_price = float(trade.get('exit_price') or 0)
         size = float(trade.get('size') or 0)
         current_price = float(trade.get('current_price') or 0)
-        direction = float(trade.get('direction') or 0)
-        exchange_rate= float(getexchange_rate(marketdata,trade.get('trade_market')))
-        
         if not trade.get('exit_price'):
-            if direction>0:
-                total_market_value += current_price * size/exchange_rate
-            else:
-                total_market_value += (entry_price+entry_price-current_price) * size/exchange_rate
+            total_market_value += current_price * size
             holding_cost += entry_price * size
         else:
-           
-            profit = (exit_price - entry_price) * size * direction/exchange_rate
-           
+            profit = (exit_price - entry_price) * size
             closed_profit_sum += profit
     available_funds = initial_asset + closed_profit_sum - holding_cost
     dynamic_total_asset = total_market_value + available_funds
-    #   if direction>0:
-    #             total_market_value += (latest_price or 0) * size / exchange_rate #计算总市值
-    #         else:
-    #             total_market_value += (entry_price+entry_price-(latest_price or 0))* size / exchange_rate #计算总市值
     return render_template(
         'vip.html',
         trader_info=trader_info,
         trades=trades,
         dynamic_total_asset=dynamic_total_asset,
     )
-def getexchange_rate(MarketData,market):
-    try:
-        for item in MarketData:
-            if item["marketname"]==market:
-                return item["exchange_rate"]
-        ...
-    except Exception as e:
-        return 1
-def getexchange_unit(MarketData,market):
-    try:
-        for item in MarketData:
-            if item["marketname"]==market:
-                return item["currency"]
-        ...
-    except Exception as e:
-        return ""
-    
+
 @app.route('/vip-dashboard')
 def vip_dashboard():
     user_id = session.get('user_id')
@@ -726,80 +641,66 @@ def vip_dashboard():
     level_cn = user.get('membership_level', '普通会员')
     level_en = get_level_en(level_cn)
     initial_asset = float(user.get('initial_asset', 0) or 0)
-    Response=supabase.table("trade_market").select("*").execute()
-    marketdata=Response.data
+
     # 只统计当前用户自己的收益
     trades_resp = supabase.table('trades').select('*').eq('user_id', user['id']).execute()
     trades = trades_resp.data if trades_resp.data else []
-    userinfo=supabase.table("view_user_info").select("*").eq('id', user['id']).execute()
-    userdata=userinfo.data
+
     # --- 新增：实时获取未平仓持仓的最新价格 ---
     for trade in trades:
         if not trade.get('exit_price'):
-            latest_price = get_real_time_price(trade.get('trade_market'),trade.get('symbol'))
+            latest_price = get_real_time_price(trade.get('symbol'))
             if latest_price:
                 trade['current_price'] = latest_price
     # --- 其它统计逻辑保持不变 ---
-    total_profit = userdata[0]["utotle_profit"]
-    monthly_profit = userdata[0]["umonth_profit"]
-    uprvmonth_profit = userdata[0]["uprvmonth_profit"]
+    total_profit = 0
+    monthly_profit = 0
     holding_profit = 0
     closed_profit = 0
     now = datetime.now()
     total_market_value = 0
     holding_cost = 0
     closed_profit_sum = 0
-    exchange_rate=1
     for trade in trades:
         entry_price = float(trade.get('entry_price') or 0)
         exit_price = float(trade.get('exit_price') or 0)
         size = float(trade.get('size') or 0)
-        direction = float(trade.get('direction') or 0)
         profit = 0
-        exchange_rate= float(getexchange_rate(marketdata,trade.get('trade_market')))
-        trade["currency"]=getexchange_unit(marketdata,trade.get('trade_market'))
-        trade["exchange_rate"]=exchange_rate
         if not trade.get('exit_price'):
-          
             symbol = trade.get('symbol')
             if not symbol:
                 print(f"[HoldingProfit] WARNING: 持仓有空symbol，entry_price={entry_price}, size={size}")
                 continue
             # 用本地API查价，和前端一致
             try:
-                # resp = requests.get(f"http://127.0.0.1:8888/api/price?symbol={symbol}&market={trade.get('trade_market')}", timeout=5)
-                # data = resp.json()
-                #获取最新价格
-                latest_price =get_real_time_price(trade.get('trade_market'),symbol) # data.get('price') if data.get('success') else None
+                resp = requests.get(f"http://127.0.0.1:5000/api/price?symbol={symbol}", timeout=3)
+                data = resp.json()
+                latest_price = data.get('price') if data.get('success') else None
             except Exception as e:
                 print(f"[HoldingProfit] ERROR: 请求本地/api/price失败: {e}")
-                latest_price = trade.get('current_price')
+                latest_price = None
             print(f"[HoldingProfit] symbol={symbol}, entry_price={entry_price}, latest_price={latest_price}, size={size}")
             if latest_price is not None:
-                
-                profit = (latest_price - entry_price) * size * direction
-                holding_profit += profit #计算持仓利润
+                profit = (latest_price - entry_price) * size
+                holding_profit += profit
             else:
-                print(f"[HoldingProfit] WARNING: /api/price?symbol={symbol}&market={trade.get('trade_market')} 返回None，无法计算持仓利润")
-            if direction>0:
-                total_market_value += (latest_price or 0) * size / exchange_rate #计算总市值
-            else:
-                total_market_value += (entry_price+entry_price-(latest_price or 0))* size / exchange_rate #计算总市值
-            holding_cost += entry_price * size / exchange_rate #持仓成本
+                print(f"[HoldingProfit] WARNING: /api/price?symbol={symbol} 返回None，无法计算持仓利润")
+            total_market_value += (latest_price or 0) * size
+            holding_cost += entry_price * size
         else:
-            profit = (exit_price - entry_price) * size * direction #计算盈利
-            closed_profit_sum += profit/exchange_rate #盈利总额
-        # if trade.get('exit_price') is not None:
-        #     profit = (exit_price - entry_price) * size * direction #计算盈利
-        #     total_profit += profit/exchange_rate #总盈利
-        #     if trade.get('exit_date') and str(trade['exit_date']).startswith(now.strftime('%Y-%m')):
-        #         monthly_profit += profit/exchange_rate
-        closed_profit = total_profit
+            profit = (exit_price - entry_price) * size
+            closed_profit_sum += profit
+        if trade.get('exit_price') is not None:
+            profit = (exit_price - entry_price) * size
+            total_profit += profit
+            if trade.get('exit_date') and str(trade['exit_date']).startswith(now.strftime('%Y-%m')):
+                monthly_profit += profit
+            closed_profit = total_profit
     available_funds = initial_asset + closed_profit_sum - holding_cost
     dynamic_total_asset = total_market_value + available_funds
 
     # 查询排行榜
-    users_resp = supabase.table('view_user_info').select('username,membership_level,avatar_url,umonth_profit,utotle_profit').eq("trader_uuid",Web_Trader_UUID).order('umonth_profit', desc=True).limit(50).execute()
+    users_resp = supabase.table('users').select('username,membership_level,avatar_url,monthly_profit,total_profit').order('monthly_profit', desc=True).limit(50).execute()
     top_users = users_resp.data if users_resp.data else []
 
     trader_info = {
@@ -810,17 +711,16 @@ def vip_dashboard():
     }
 
     # 查询VIP策略公告（取前2条，按date降序）
-    announcements_resp = supabase.table('vip_announcements').select('*').eq("trader_uuid",Web_Trader_UUID).order('date', desc=True).limit(2).execute()
+    announcements_resp = supabase.table('vip_announcements').select('*').order('date', desc=True).limit(2).execute()
     announcements = announcements_resp.data if announcements_resp.data else []
 
     # 查询VIP交易记录（取前10条，按entry_time降序）
-    vip_trades_resp = supabase.table('vip_trades').select('*').eq("trader_uuid",Web_Trader_UUID).order('entry_time', desc=True).limit(10).execute()
+    vip_trades_resp = supabase.table('vip_trades').select('*').order('entry_time', desc=True).limit(10).execute()
     vip_trades = vip_trades_resp.data if vip_trades_resp.data else []
-    for item in vip_trades:
-          item["currency"]=getexchange_unit(marketdata,item.get('trade_market'))
+
     # --- trades排序：未平仓排前面，再按entry_date降序 ---
     trades.sort(key=lambda t: (0 if not t.get('exit_price') else 1, t.get('entry_date') or ''), reverse=False)
-   
+
     return render_template(
         'vip-dashboard.html',
         trader_info=trader_info,
@@ -830,14 +730,12 @@ def vip_dashboard():
         available_funds=available_funds,
         total_profit=total_profit,
         monthly_profit=monthly_profit,
-        uprvmonth_profit=uprvmonth_profit,
         holding_profit=holding_profit,
         trades=trades,
         top_users=top_users,
         membership_level_class=membership_level_class,
         announcements=announcements,
-        vip_trades=vip_trades,
-        marketdata=marketdata
+        vip_trades=vip_trades
     )
 
 # --- 用户表自动建表 ---
@@ -912,16 +810,6 @@ def init_user_membership_db():
     ''')
     conn.commit()
     conn.close()
-# --- 会员等级分配API ---
-@app.route('/api/gettrade_market', methods=['GET'])
-def gettrade_market():
-    try:
-        response = supabase.table('trade_market').select("*").execute()
-        data=response.data
-        return jsonify({'success': True, 'data': data}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Operation failed: {str(e)}'}), 500
-    
 
 # --- 会员等级分配API ---
 @app.route('/api/admin/assign-membership', methods=['POST'])
@@ -1088,12 +976,9 @@ def login():
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
-        if username=="admin":
-            # 从Supabase获取用户信息
-            response = supabase.table('users').select('*').eq('username', username).execute()
-        else:
-             # 从Supabase获取用户信息
-            response = supabase.table('users').select('*').eq('username', username).eq("trader_uuid",Web_Trader_UUID,).execute()
+        
+        # 从Supabase获取用户信息
+        response = supabase.table('users').select('*').eq('username', username).execute()
         
         if not response.data:
             return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
@@ -1128,7 +1013,6 @@ def login():
         session['user_id'] = user['id']
         session['username'] = user['username']
         session['role'] = user.get('role', 'user')
-        session['trader_uuid'] = user['trader_uuid']
         
         return jsonify({
             'success': True,
@@ -1168,7 +1052,7 @@ def update_holding_stocks_prices():
             # 检查是否是持有中的股票
             if trade.get('exit_price') is None and trade.get('exit_date') is None:
                 symbol = trade['symbol']
-                current_price = get_real_time_price(trade["trade_market"],symbol)
+                current_price = get_real_time_price(symbol)
                 
                 if current_price:
                     # 计算新的数据
@@ -1219,7 +1103,7 @@ def update_all_trades_prices():
                     symbol = trade.get('symbol')
                     if not symbol:
                         continue
-                    current_price = get_real_time_price(trade["trade_market"],symbol)
+                    current_price = get_real_time_price(symbol)
                     if current_price:
                         try:
                             supabase.table(table).update({'current_price': current_price}).eq('id', trade['id']).execute()
@@ -1240,15 +1124,6 @@ scheduler.add_job(
     trigger=IntervalTrigger(seconds=30),  # 改为30秒
     id='update_stock_prices',
     name='Update holding stocks prices every 30 seconds',
-    replace_existing=True
-)
-
-# 添加定时任务，每30秒更新一次印度股票价格
-scheduler.add_job(
-    func=get_India_price,
-    trigger=IntervalTrigger(seconds=30),  # 改为5秒
-    id='update_stock_prices',
-    name='Update holding stocks India prices every 5 seconds',
     replace_existing=True
 )
 
@@ -1287,101 +1162,7 @@ def check_login():
         return jsonify({'isLoggedIn': False})
     except Exception as e:
         return jsonify({'isLoggedIn': False}), 500
-# --- 管理员接口 ---
-@app.route('/api/admin/trader', methods=['GET', 'POST'])
-def manage_trader():
-    try:
-        # 检查管理员权限
-        if 'role' not in session or session['role'] != 'admin':
-            return jsonify({'success': False, 'message': '无权限访问'}), 403
-            
-        if request.method == 'GET':
-            id=query = request.args.get('id')
-            if not id:
-                # 获取所有用户
-                trader_uuid=session['trader_uuid']
-                if trader_uuid:
-                    response = supabase.table('trader_profiles').select('*').eq("trader_uuid",trader_uuid).execute()
-                else:
-                    response = supabase.table('trader_profiles').select('*').execute()
-            else:
-                response = supabase.table('trader_profiles').select('*').eq("id",id).execute()
-            # 过滤敏感信息
-            users = []
-            for user in response.data:
-                
-                users.append(user)
-            return jsonify({'success': True, 'users': users})
-            
-        elif request.method == 'POST':
-            if ('role' not in session or session['role'] != 'admin'):
-                return jsonify({'success': False, 'message': '你无权添加交易员'}), 403
-            
-            # 创建新用户
-            data = request.get_json()
-            
-            # 检查必要字段
-            if not data.get('trader_name'):
-                return jsonify({'success': False, 'message': '交易员名称不能为空'}), 400
-            if session["trader_uuid"] and session["trader_uuid"]!=data["trader_uuid"] and data["id"]!="0":
-                return jsonify({'success': False, 'message': '你无权添加交易员'}), 400
-            if session["trader_uuid"] and data["id"]=="0":
-                return jsonify({'success': False, 'message': '你无权添加交易员'}), 400
-            # # 检查用户名是否已存在
-            # check_response = supabase.table('users').select('id').eq('username', data['username']).execute()
-            # if check_response.data:
-            #     return jsonify({'success': False, 'message': '用户名已存在'}), 400
-                
-            # # 创建新用户
-            # new_user = {
-            #     'username': data['username'],
-            #     'password_hash': data['password'],  # 在实际应用中应该对密码进行加密
-            #     'email': data.get('email'),
-            #     'role': data.get('role', 'user'),
-            #     'status': 'active',
-            #     'membership_level': data.get('membership_level', '普通会员'),
-            #     'created_at': datetime.now(pytz.UTC).isoformat(),
-            #     'initial_asset': float(data.get('initial_asset', 0) or 0),
-            #     'trader_uuid':data.get('trader_uuid')
-            # }
 
-            # if data.get('trader_uuid')=='':
-            #     new_user["trader_uuid"]=None
-            # if session["trader_uuid"]:
-            #     new_user["trader_uuid"]=session["trader_uuid"]
-         
-            if(data["id"]=="0"):
-                del data["id"]
-                response = supabase.table('trader_profiles').insert(data).execute()
-                ts={
-                    'trader_name':response.data[0]["trader_name"],
-                    'professional_title':response.data[0]["professional_title"],
-                    'profile_image_url':response.data[0]["profile_image_url"],
-                    'win_rate':response.data[0]["win_rate"],
-                    'trader_uuid':response.data[0]["trader_uuid"]
-                }
-                responses = supabase.table('leaderboard_traders').insert(ts).execute()
-            else:
-                traderID=data["id"]
-                del data["id"]
-                response = supabase.table('trader_profiles').update(data).eq("id",int(traderID)).execute()
-                # ts={
-                #     'trader_name':data["trader_name"],
-                #     'professional_title':data["professional_title"],
-                #     'profile_image_url':data["profile_image_url"],
-                #     'win_rate':data["win_rate"]
-                # }
-                # responses = supabase.table('leaderboard_traders').update(ts).eq("trader_uuid",response.data[0]['trader_uuid']).execute()
-            
-            return jsonify({
-                'success': True,
-                'message': 'User created successfully',
-                'user_id': response.data[0]['id']
-            })
-            
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Operation failed'}), 500
-    
 # --- 管理员接口 ---
 @app.route('/api/admin/users', methods=['GET', 'POST'])
 def manage_users():
@@ -1391,16 +1172,8 @@ def manage_users():
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
         if request.method == 'GET':
-            id=query = request.args.get('id')
-            if not id:
-                # 获取所有用户
-                trader_uuid=session['trader_uuid']
-                if trader_uuid:
-                    response = supabase.table('users').select('*').eq("trader_uuid",trader_uuid).execute()
-                else:
-                    response = supabase.table('users').select('*').eq("role",'admin').execute()
-            else:
-                response = supabase.table('users').select('*').eq("id",id).execute()
+            # 获取所有用户
+            response = supabase.table('users').select('*').execute()
             # 过滤敏感信息
             users = []
             for user in response.data:
@@ -1419,8 +1192,7 @@ def manage_users():
                     'last_login_location': user.get('last_login_location'),
                     'created_at': user.get('created_at'),
                     'avatar_url': user.get('avatar_url'),
-                    'initial_asset': user.get('initial_asset', 0),
-                    'trader_uuid':user.get('trader_uuid')
+                    'initial_asset': user.get('initial_asset', 0)
                 })
             return jsonify({'success': True, 'users': users})
             
@@ -1446,13 +1218,8 @@ def manage_users():
                 'status': 'active',
                 'membership_level': data.get('membership_level', '普通会员'),
                 'created_at': datetime.now(pytz.UTC).isoformat(),
-                'initial_asset': float(data.get('initial_asset', 0) or 0),
-                'trader_uuid':data.get('trader_uuid')
+                'initial_asset': float(data.get('initial_asset', 0) or 0)
             }
-            if data.get('trader_uuid')=='':
-                new_user["trader_uuid"]=None
-            if session["trader_uuid"]:
-                new_user["trader_uuid"]=session["trader_uuid"]
             
             response = supabase.table('users').insert(new_user).execute()
             
@@ -1632,13 +1399,8 @@ def admin_dashboard():
         
     if session.get('role') != 'admin':
         return redirect(url_for('vip'))
-    Response=supabase.table("trade_market").select("*").execute()
-    marketdata=Response.data
-    trader_uuid=""
-    if session["trader_uuid"]:
-        trader_uuid=session["trader_uuid"]
     
-    return render_template('admin/dashboard.html', admin_name=session.get('username', 'Admin'),marketdata=marketdata,createTrader=trader_uuid)
+    return render_template('admin/dashboard.html', admin_name=session.get('username', 'Admin'))
 
 # --- 交易策略管理路由 ---
 @app.route('/admin/strategy')
@@ -1657,7 +1419,7 @@ def manage_strategy():
             
         if request.method == 'GET':
             # 获取最新的交易策略
-            strategy_response = supabase.table('trading_strategies').select("*").eq("trader_uuid",session['trader_uuid']).order('updated_at', desc=True).limit(1).execute()
+            strategy_response = supabase.table('trading_strategies').select("*").order('updated_at', desc=True).limit(1).execute()
             
             if strategy_response.data:
                 strategy = strategy_response.data[0]
@@ -1702,8 +1464,7 @@ def manage_strategy():
                 'market_analysis': data['market_analysis'],
                 'trading_focus': trading_focus,
                 'risk_warning': data['risk_warning'],
-                'updated_at': datetime.now(pytz.UTC).isoformat(),
-                'trader_uuid':session["trader_uuid"]
+                'updated_at': datetime.now(pytz.UTC).isoformat()
             }
             
             try:
@@ -1735,7 +1496,7 @@ def manage_strategy():
 def get_strategy_history():
     try:
         # 从 Supabase 获取所有策略记录，按时间倒序排列
-        response = supabase.table('trading_strategies').select("*").eq("trader_uuid",session['trader_uuid']).order('updated_at', desc=True).execute()
+        response = supabase.table('trading_strategies').select("*").order('updated_at', desc=True).execute()
         
         if not response.data:
             return jsonify({
@@ -1781,7 +1542,7 @@ def strategy_permissions():
 def delete_strategy_history(history_id):
     try:
         # 从 Supabase 删除历史记录
-        response = supabase.table('strategy_history').delete().eq('id', history_id).eq("trader_uuid",session['trader_uuid']).execute()
+        response = supabase.table('strategy_history').delete().eq('id', history_id).execute()
         
         if not response.data:
             return jsonify({'success': False, 'message': '删除失败，记录不存在'}), 404
@@ -1808,15 +1569,13 @@ def manage_trading():
             
         if request.method == 'GET':
             # 获取所有交易记录
-            response = supabase.table('trades1').select("*").eq("trader_uuid",session['trader_uuid']).order('entry_date', desc=True).execute()
+            response = supabase.table('trades1').select("*").order('entry_date', desc=True).execute()
             
             trades = []
             for trade in response.data:
                 trades.append({
                     'id': trade['id'],
-                    'trade_market': trade['trade_market'],
                     'symbol': trade['symbol'],
-                    'Direction': trade['direction'],
                     'entry_price': trade['entry_price'],
                     'exit_price': trade.get('exit_price'),
                     'size': trade['size'],
@@ -1840,13 +1599,11 @@ def manage_trading():
                 return jsonify({'success': False, 'message': '缺少必要字段'}), 400
                 
             trade_data = {
-                'trade_market': data['trade_market'],
                 'symbol': data['symbol'],
                 'entry_price': data['entry_price'],
                 'size': data['size'],
                 'entry_date': data.get('entry_date') or datetime.now(pytz.UTC).isoformat(),
-                'current_price': data['entry_price'],
-                'trader_uuid':Web_Trader_UUID
+                'current_price': data['entry_price']
             }
             
             response = supabase.table('trades1').insert(trade_data).execute()
@@ -1914,13 +1671,8 @@ def manage_leaderboard():
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
         if request.method == 'GET':
-            if session['trader_uuid']:
-                # 获取排行榜数据
-                response = supabase.table('leaderboard_traders').select("*").eq("trader_uuid",session['trader_uuid']).order('total_profit', desc=True).execute()
-            else:
-                 # 获取排行榜数据
-                response = supabase.table('leaderboard_traders').select("*").order('total_profit', desc=True).execute()
-                
+            # 获取排行榜数据
+            response = supabase.table('leaderboard_traders').select("*").order('total_profit', desc=True).execute()
             
             return jsonify({
                 'success': True,
@@ -1930,20 +1682,18 @@ def manage_leaderboard():
         elif request.method == 'POST':
             # 添加新的排行榜记录
             data = request.get_json()
-            required_fields = ['trader_name', 'total_profit', 'win_rate', 'total_trades', 'profile_image_url','followers_count','likes_count']
+            required_fields = ['trader_name', 'total_profit', 'win_rate', 'total_trades', 'profile_image_url']
             
             if not all(field in data for field in required_fields):
                 return jsonify({'success': False, 'message': '缺少必要字段'}), 400
                 
             leaderboard_data = {
                 'trader_name': data['trader_name'],
-                'professional_title':data.get('professional_title'),
                 'total_profit': data['total_profit'],
                 'win_rate': data['win_rate'],
                 'total_trades': data['total_trades'],
                 'profile_image_url': data['profile_image_url'],
-                'updated_at': datetime.now(pytz.UTC).isoformat(),
-                'trader_uuid':session["trader_uuid"]
+                'updated_at': datetime.now(pytz.UTC).isoformat()
             }
             
             response = supabase.table('leaderboard_traders').insert(leaderboard_data).execute()
@@ -1963,12 +1713,9 @@ def manage_leaderboard():
                 
             update_data = {
                 'trader_name': data.get('trader_name'),
-                'professional_title':data.get('professional_title'),
                 'total_profit': data.get('total_profit'),
                 'win_rate': data.get('win_rate'),
                 'total_trades': data.get('total_trades'),
-                 'followers_count': data['followers_count'],
-                'likes_count': data['likes_count'],
                 'profile_image_url': data.get('profile_image_url'),
                 'updated_at': datetime.now(pytz.UTC).isoformat()
             }
@@ -2101,13 +1848,13 @@ def add_test_data():
     except Exception as e:
         pass
 
-@app.route('/api/trader/')
-def get_trader_data():
+@app.route('/api/trader/<trader_name>')
+def get_trader_data(trader_name):
     try:
         # Get trader data from Supabase
-        response = supabase.table('trader_profiles')\
+        response = supabase.table('leaderboard_traders')\
             .select('*')\
-            .eq('trader_uuid', Web_Trader_UUID)\
+            .eq('trader_name', trader_name)\
             .single()\
             .execute()
             
@@ -2128,65 +1875,36 @@ def get_trader_data():
             'message': 'Error fetching trader data'
         }), 500
 
-@app.route('/api/like-trader', methods=['POST'])
-def like_trader():
+@app.route('/api/like-trader/<trader_name>', methods=['POST'])
+def like_trader(trader_name):
     try:
-        data = request.get_json()
         # Get trader data from Supabase
-        if data['id']!='0':
-            response = supabase.table('leaderboard_traders')\
-                .select('*')\
-                .eq('id', data['id'])\
-                .single()\
+        response = supabase.table('leaderboard_traders')\
+            .select('*')\
+            .eq('trader_name', trader_name)\
+            .single()\
+            .execute()
+            
+        if response.data:
+            # Update likes count
+            current_likes = response.data.get('likes_count', 0)
+            updated_likes = current_likes + 1
+            
+            # Update in database
+            supabase.table('leaderboard_traders')\
+                .update({'likes_count': updated_likes})\
+                .eq('trader_name', trader_name)\
                 .execute()
                 
-            if response.data:
-                # Update likes count
-                current_likes = response.data.get('likes_count', 0)
-                updated_likes = current_likes + 1
-                
-                # Update in database
-                supabase.table('leaderboard_traders')\
-                    .update({'likes_count': updated_likes})\
-                    .eq('id', data['id'])\
-                    .execute()
-                    
-                return jsonify({
-                    'success': True,
-                    'likes_count': updated_likes
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'message': 'Trader not found'
-                }), 404
+            return jsonify({
+                'success': True,
+                'likes_count': updated_likes
+            })
         else:
-            response = supabase.table('trader_profiles')\
-                .select('*')\
-                .eq('trader_uuid', Web_Trader_UUID)\
-                .single()\
-                .execute()
-                
-            if response.data:
-                # Update likes count
-                current_likes = response.data.get('likes_count', 0)
-                updated_likes = current_likes + 1
-                
-                # Update in database
-                supabase.table('leaderboard_traders')\
-                    .update({'likes_count': updated_likes})\
-                    .eq('trader_uuid', Web_Trader_UUID)\
-                    .execute()
-                    
-                return jsonify({
-                    'success': True,
-                    'likes_count': updated_likes
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'message': 'Trader not found'
-                }), 404
+            return jsonify({
+                'success': False,
+                'message': 'Trader not found'
+            }), 404
             
     except Exception as e:
         return jsonify({
@@ -2229,7 +1947,7 @@ def manage_whatsapp_agents():
             
         if request.method == 'GET':
             # 获取所有WhatsApp客服
-            response = supabase.table('whatsapp_agents').select("*").eq("trader_uuid",Web_Trader_UUID).e.execute()
+            response = supabase.table('whatsapp_agents').select("*").execute()
             return jsonify({
                 'success': True,
                 'agents': response.data
@@ -2238,7 +1956,7 @@ def manage_whatsapp_agents():
         elif request.method == 'POST':
             # 添加新的WhatsApp客服
             data = request.get_json()
-            required_fields = ['id','name', 'phone_number']
+            required_fields = ['name', 'phone_number']
             
             if not all(field in data for field in required_fields):
                 return jsonify({'success': False, 'message': '缺少必要字段'}), 400
@@ -2251,15 +1969,12 @@ def manage_whatsapp_agents():
             agent_data = {
                 'name': data['name'],
                 'phone_number': phone_number,
-                'is_active': True if data['is_active'] == "true" else False,
+                'is_active': data.get('is_active', True),
                 'created_at': datetime.now(pytz.UTC).isoformat(),
-                'trader_uuid':session["trader_uuid"]
+                'updated_at': datetime.now(pytz.UTC).isoformat()
             }
-            if  data.get('id', '')=='':
-                response = supabase.table('whatsapp_agents').insert(agent_data).execute()
-            else:
-                response = supabase.table('whatsapp_agents').update(agent_data).eq('id',data.get('id', '')).execute()
-                
+            
+            response = supabase.table('whatsapp_agents').insert(agent_data).execute()
             
             return jsonify({
                 'success': True,
@@ -2317,7 +2032,6 @@ def upload_trade():
     try:
         user_id = session.get('user_id')
         username = session.get('username')
-        trade_market = request.form.get('Trade_market')
         symbol = request.form.get('symbol')
         entry_price = request.form.get('entry_price')
         size = request.form.get('size')
@@ -2327,7 +2041,7 @@ def upload_trade():
         trade_type = request.form.get('trade_type')
 
         # 检查必填字段
-        if not all([user_id,trade_market, symbol, entry_price, size, entry_date, asset_type, direction]):
+        if not all([user_id, symbol, entry_price, size, entry_date, asset_type, direction]):
             return jsonify({'success': False, 'message': '参数不完整'}), 400
 
         # 类型转换
@@ -2340,15 +2054,13 @@ def upload_trade():
         resp = supabase.table('trades').insert({
             'user_id': user_id,
             'username': username,
-            'trade_market':trade_market,
             'symbol': symbol,
             'entry_price': entry_price,
             'size': size,
             'entry_date': entry_date,
             'asset_type': asset_type,
             'direction': direction,
-            'trade_type': trade_type,
-            'trader_uuid':Web_Trader_UUID
+            'trade_type': trade_type
         }).execute()
 
         # 获取新插入的 trade_id
@@ -2366,22 +2078,12 @@ def update_trade():
         trade_id = request.form.get('id')
         exit_price = request.form.get('exit_price')
         exit_date = request.form.get('exit_date')
-        entry_price=0
-        direction=1
-        size=0
+
         print('update trade:', trade_id, exit_price, exit_date)
-        Response=supabase.table("trade_market").select("*").execute()
-        marketdata=Response.data
+
         if not all([trade_id, exit_price, exit_date]):
             return jsonify({'success': False, 'message': 'Incomplete parameters'}), 400
-        trade_data=supabase.table("trades").select("*").eq("id",trade_id).execute()
-        exchange_rate= 1
-        if trade_data:
-            entry_price=trade_data.data[0]["entry_price"]
-            direction=trade_data.data[0]["direction"]
-            size=trade_data.data[0]["size"]
-            exchange_rate= float(getexchange_rate(marketdata,trade_data.data[0]['trade_market']))
-        profit=(float(exit_price)-entry_price)*size*direction
+
         try:
             exit_price = float(exit_price)
         except Exception:
@@ -2389,9 +2091,7 @@ def update_trade():
 
         result = supabase.table('trades').update({
             'exit_price': exit_price,
-            'exit_date': exit_date,
-            'profit':round(profit,2),
-            'exchange_rate':exchange_rate
+            'exit_date': exit_date
         }).eq('id', trade_id).execute()
         print('update result:', result.data)
 
@@ -2438,7 +2138,7 @@ def membership_agreement():
 def manage_documents():
     try:
         if request.method == 'GET':
-            response = supabase.table('documents').select('*').eq("trader_uuid",session["trader_uuid"]).order('last_update', desc=True).execute()
+            response = supabase.table('documents').select('*').order('last_update', desc=True).execute()
             return jsonify({'success': True, 'documents': response.data})
         elif request.method == 'POST':
             file = request.files.get('file')
@@ -2468,8 +2168,7 @@ def manage_documents():
                 'file_url': public_url,
                 'file_type': file_type,
                 'last_update': now,
-                'views': 0,
-                'trader_uuid':session["trader_uuid"]
+                'views': 0
             }
             insert_resp = supabase.table('documents').insert(doc_data).execute()
             if hasattr(insert_resp, 'error') and insert_resp.error:
@@ -2526,7 +2225,7 @@ def manage_videos():
             
         if request.method == 'GET':
             # 获取视频列表不需要管理员权限
-            response = supabase.table('videos').select('*').eq("trader_uuid",session["trader_uuid"]).order('last_update', desc=True).execute()
+            response = supabase.table('videos').select('*').order('last_update', desc=True).execute()
             return jsonify({'success': True, 'videos': response.data})
         elif request.method == 'POST':
             # 上传视频需要管理员权限
@@ -2575,8 +2274,7 @@ def manage_videos():
                     'title': title,
                     'description': description,
                     'video_url': public_url,
-                    'last_update': now,
-                    'trader_uuid':session["trader_uuid"]
+                    'last_update': now
                 }
                 
                 print("public_url:", public_url)
@@ -2656,68 +2354,7 @@ def get_level_en(level_cn):
 
 @app.route('/api/admin/change_avatar', methods=['POST'])
 def admin_change_avatar():
-    try:
-       
-        idname=request.form.get('idname')
-        avatarUserId=request.form.get('avatarUserId')
-        tablename=request.form.get('tablename')
-        filedname=request.form.get('filedname')
-        file = request.files.get('avatar')
-                
-            # 检查文件大小（限制为600MB）
-        file_bytes = file.read()
-        if len(file_bytes) > 600 * 1024 * 1024:  # 600MB
-            return jsonify({'success': False, 'message': 'File size cannot exceed 600MB'}), 400
-                
-        filename = secure_filename(file.filename)
-        file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-            
-        # 检查文件类型
-        allowed_extensions = {'jpg', 'jpeg', 'png', 'bmp', 'webp'}
-        if file_ext not in allowed_extensions:
-            return jsonify({'success': False, 'message': f'不支持的文件类型，仅支持: {", ".join(allowed_extensions)}'}), 400
-            
-        file_path = f"{uuid.uuid4().hex}_{filename}"
-        try:
-                # 上传到 Supabase Storage
-                result = supabase.storage.from_('avatars').upload(
-                    file_path,
-                    file_bytes,
-                    file_options={"content-type": file.mimetype}
-                )
-                
-                if hasattr(result, 'error') and result.error:
-                    return jsonify({'success': False, 'message': f'Video upload failed: {result.error}'}), 500
-                    
-                # 获取公开URL
-                public_url = supabase.storage.from_('avatars').get_public_url(file_path)
-                
-                # 写入数据库
-                video_data = {
-                   
-                }
-                video_data[filedname]=public_url
-
-                
-                print("public_url:", public_url)
-                print("video_data:", video_data)
-                insert_resp = supabase.table(tablename).update(video_data).eq(idname,avatarUserId).execute()
-                if tablename=="trader_profiles":
-                    user=supabase.table("trader_profiles").select("trader_uuid").eq(idname,avatarUserId).execute()
-                    # up_resp= supabase.table("leaderboard_traders").update(video_data).eq("trader_uuid",user.data[0]["trader_uuid"]).execute()
-                    
-                if hasattr(insert_resp, 'error') and insert_resp.error:
-                    return jsonify({'success': False, 'message': f'Database write failed: {insert_resp.error}'}), 500
-                    
-                return jsonify({'success': True, 'message': 'Upload successful', 'video': insert_resp.data[0]})
-                
-        except Exception as e:
-                import traceback
-                print("视频上传异常：", e)
-                print(traceback.format_exc())
-                return jsonify({'success': False, 'message': f'Upload failed: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+    return jsonify({'success': True, 'message': 'Avatar updated successfully', 'avatar_url': DEFAULT_AVATAR_URL})
 
 # 获取所有VIP投资策略公告（Supabase版）
 @app.route('/api/admin/vip-announcements', methods=['GET'])
@@ -2727,7 +2364,7 @@ def get_vip_announcements():
         if 'role' not in session or session['role'] != 'admin':
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
-        resp = supabase.table('vip_announcements').select('*').eq("trader_uuid",session["trader_uuid"]).order('created_at', desc=True).execute()
+        resp = supabase.table('vip_announcements').select('*').order('created_at', desc=True).execute()
         announcements = resp.data if resp.data else []
         return jsonify({'success': True, 'announcements': announcements})
     except Exception as e:
@@ -2776,11 +2413,9 @@ def edit_vip_announcement(announcement_id):
         update_fields = {k: v for k, v in data.items() if k in ['title', 'content', 'status', 'priority', 'type', 'publisher', 'date']}
         if not update_fields:
             return jsonify({'success': False, 'message': '没有可更新的字段'}), 400
-        if announcement_id!=0:    
-            resp = supabase.table('vip_announcements').update(update_fields).eq('id', announcement_id).execute()
-        else:
-            update_fields["trader_uuid"]=session["trader_uuid"]
-            resp = supabase.table('vip_announcements').insert(update_fields).execute()
+            
+        resp = supabase.table('vip_announcements').update(update_fields).eq('id', announcement_id).execute()
+        
         # 检查更新是否成功
         if hasattr(resp, 'data') and resp.data:
             return jsonify({'success': True, 'message': '策略公告已更新'})
@@ -2818,7 +2453,7 @@ def get_vip_trades():
         if 'role' not in session or session['role'] != 'admin':
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
-        resp = supabase.table('vip_trades').select('*').eq("trader_uuid",session["trader_uuid"]).order('entry_time', desc=True).execute()
+        resp = supabase.table('vip_trades').select('*').order('entry_time', desc=True).execute()
         trades = resp.data if resp.data else []
         
         for trade in trades:
@@ -2863,7 +2498,7 @@ def add_vip_trade():
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
         data = request.json
-        required_fields = ['trade_market','symbol', 'entry_price', 'quantity', 'entry_time', 'trade_type']
+        required_fields = ['symbol', 'entry_price', 'quantity', 'entry_time', 'trade_type']
         if not all(field in data for field in required_fields):
             return jsonify({'success': False, 'message': '缺少必要字段'}), 400
             
@@ -2874,10 +2509,9 @@ def add_vip_trade():
             entry_time = datetime.fromisoformat(data['entry_time'].replace('Z', '+00:00'))
         except (ValueError, TypeError) as e:
             return jsonify({'success': False, 'message': f'数据类型错误: {str(e)}'}), 400
-        if data['trade_market']==None or data['trade_market']=="":
-            return jsonify({'success': False, 'message': '数据类型错误: 请选择交易市场'}), 400
+            
         # 获取当前价格
-        current_price = get_real_time_price(data["trade_market"],data['symbol'])
+        current_price = get_real_time_price(data['symbol'])
         if not current_price:
             return jsonify({'success': False, 'message': '无法获取当前价格'}), 400
             
@@ -2887,7 +2521,6 @@ def add_vip_trade():
         
         # 准备交易数据
         trade_data = {
-            'trade_market': data['trade_market'],
             'symbol': data['symbol'],
             'entry_price': entry_price,
             'quantity': quantity,
@@ -2899,8 +2532,7 @@ def add_vip_trade():
             'roi': roi,
             'created_by': session['user_id'],
             'asset_type': data.get('asset_type'),  # 新增
-            'direction': data.get('direction') ,    # 新增
-            'trader_uuid':session["trader_uuid"]
+            'direction': data.get('direction')     # 新增
         }
         
         resp = supabase.table('vip_trades').insert(trade_data).execute()
@@ -2930,8 +2562,8 @@ def edit_vip_trade(trade_id):
             return jsonify({'success': False, 'message': '没有可更新的字段'}), 400
             
         # 如果更新了价格相关字段，重新计算盈亏
-        if any(k in update_fields for k in ['trade_market','entry_price', 'exit_price', 'quantity']):
-            current_price = get_real_time_price(update_fields.get('trade_market', data.get('trade_market')),update_fields.get('symbol', data.get('symbol')))
+        if any(k in update_fields for k in ['entry_price', 'exit_price', 'quantity']):
+            current_price = get_real_time_price(update_fields.get('symbol', data.get('symbol')))
             if current_price:
                 entry_price = float(update_fields.get('entry_price', data.get('entry_price', 0)))
                 quantity = float(update_fields.get('quantity', data.get('quantity', 0)))
@@ -2959,7 +2591,7 @@ def delete_vip_trade(trade_id):
         # 检查管理员权限
         if 'role' not in session or session['role'] != 'admin':
             return jsonify({'success': False, 'message': '无权限访问'}), 403
-        
+            
         resp = supabase.table('vip_trades').delete().eq('id', trade_id).execute()
         if hasattr(resp, 'error') and resp.error:
             return jsonify({'success': False, 'message': f'删除失败: {resp.error}'}), 500
@@ -2985,10 +2617,9 @@ def download_proxy():
 
 if __name__ == '__main__':
     # 初始化数据库
-    # init_user_db()
-    # init_membership_levels_db()
-    # init_user_membership_db()
-    #初始化印度股票数据
-    get_India_price()
+    init_user_db()
+    init_membership_levels_db()
+    init_user_membership_db()
+    
     # 启动应用
-    app.run(debug=True, host='0.0.0.0', port=8888)
+    app.run(debug=True)

@@ -2888,7 +2888,7 @@
             <div class="vip-trade-card-new">
               <div class="vip-trade-card-left">
                 <div class="vip-symbol">{{ trade.symbol }}</div>
-                <div class="vip-type {{ 'sell' if trade.trade_type not in ['买涨','buy','多','long'] else '' }}">{{ trade.trade_type|default(trade.direction)|capitalize }}</div>
+                <div class="vip-type {{ 'sell' if trade.trade_type not in ['买涨','long','多','short'] else '' }}">{{ trade.trade_type|default(trade.direction)|capitalize }}</div>
                 <div class="vip-status status-{{ trade.status|lower }}">{{ trade.status|capitalize }}</div>
               </div>
               <div class="vip-trade-card-main">
@@ -3117,19 +3117,23 @@
     <div class="glass-stat-card-grid">
         <div class="glass-stat-card">
             <div class="glass-stat-label">Initial Capital</div>
-            <div class="glass-stat-value" style="color:#00ffae;">{{ '{:,.2f}'.format(total_asset) }}<span class="glass-stat-unit">$</span></div>
+            <div class="glass-stat-value" style="color:#00ffae; font-size: 18px;">{{ '{:,.2f}'.format(total_asset) }}<span class="glass-stat-unit">$</span></div>
         </div>
         <div class="glass-stat-card">
             <div class="glass-stat-label">Total Profit</div>
-            <div class="glass-stat-value" style="color:#ffd700;">{{ '{:,.2f}'.format(total_profit) }}<span class="glass-stat-unit">$</span></div>
+            <div class="glass-stat-value" style="color:#ffd700; font-size: 18px;">{{ '{:,.2f}'.format(total_profit) }}<span class="glass-stat-unit">$</span></div>
+        </div>
+         <div class="glass-stat-card">
+            <div class="glass-stat-label">Monthly Profit</div>
+            <div class="glass-stat-value" style="color:#52c41a; font-size: 18px;">{{ '{:,.2f}'.format(monthly_profit) }}<span class="glass-stat-unit">$</span></div>
         </div>
         <div class="glass-stat-card">
-            <div class="glass-stat-label">Monthly Profit</div>
-            <div class="glass-stat-value" style="color:#52c41a;">{{ '{:,.2f}'.format(monthly_profit) }}<span class="glass-stat-unit">$</span></div>
+            <div class="glass-stat-label">Last Month Profit</div>
+            <div class="glass-stat-value" style="color:#52c41a; font-size: 18px;">{{ '{:,.2f}'.format(uprvmonth_profit) }}<span class="glass-stat-unit">$</span></div>
         </div>
         <div class="glass-stat-card">
             <div class="glass-stat-label">Holding Profit</div>
-            <div class="glass-stat-value" id="holding-profit-card" style="color:#faad14;">{{ '{:,.2f}'.format(holding_profit) }}<span class="glass-stat-unit">$</span></div>
+            <div class="glass-stat-value" id="holding-profit-card" style="color:#faad14; font-size: 18px;">{{ '{:,.2f}'.format(holding_profit) }}<span class="glass-stat-unit">$</span></div>
         </div>
     </div>
 
@@ -3169,8 +3173,9 @@
         <table class="vip-trades-table">
           <thead>
             <tr>
+              <th>Market</th>
+              <th>Direction</th>
               <th>Symbol</th>
-              <th>Type</th>
               <th>Entry Price</th>
               <th>Current Price</th>
               <th>Exit Price</th>
@@ -3183,17 +3188,15 @@
           <tbody>
             {% for trade in vip_trades %}
             <tr>
+               <td class="symbol-cell">{{ trade.trade_market }}</td>
+                <td class="symbol-cell">{% if trade.direction==1 %}Long{%else%} Short {%endif%}</td>
               <td class="symbol-cell">{{ trade.symbol }}</td>
-              <td>
-                <span class="trade-type-badge {{ 'buy' if trade.direction in ['买涨','buy','多','long'] else 'sell' }}">
-                  {{ 'Buy' if trade.direction in ['买涨','buy','多','long'] else 'Sell' }}
-                </span>
-              </td>
-              <td>${{ "%.2f"|format(trade.entry_price) if trade.entry_price else '-' }}</td>
+             
+              <td>{{trade.currency}}{{ "%.2f"|format(trade.entry_price) if trade.entry_price else '-' }}</td>
               <td class="current-price" data-symbol="{{ trade.symbol }}">
-                ${{ "%.2f"|format(trade.current_price) if trade.current_price else '-' }}
+                {{trade.currency}}{{ "%.2f"|format(trade.current_price) if trade.current_price else '-' }}
               </td>
-              <td>${{ "%.2f"|format(trade.exit_price) if trade.exit_price else '-' }}</td>
+              <td>{{trade.currency}}{{ "%.2f"|format(trade.exit_price) if trade.exit_price else '-' }}</td>
               <td>{{ "%.1f"|format(trade.quantity) if trade.quantity else '-' }}</td>
               <td class="pnl-cell" data-entry="{{ trade.entry_price }}" data-exit="{{ trade.exit_price }}" data-current="{{ trade.current_price }}" data-quantity="{{ trade.quantity }}" data-direction="{{ trade.direction }}">
                 <span class="pnl-value">Calculating...</span>
@@ -3386,18 +3389,18 @@
       if (entryPrice && finalPrice && quantity) {
         let pnl = 0;
         if (direction && direction.toLowerCase().includes('sell')) {
-          pnl = (entryPrice - finalPrice) * quantity;
+          pnl = (entryPrice - finalPrice) * quantity*parseInt(direction);
         } else {
-          pnl = (finalPrice - entryPrice) * quantity;
+          pnl = (finalPrice - entryPrice) * quantity*parseInt(direction);
         }
         
         const pnlValue = cell.querySelector('.pnl-value');
-        pnlValue.textContent = `$${pnl.toFixed(2)}`;
+        pnlValue.textContent = `${pnl.toFixed(2)}`;
         pnlValue.className = `pnl-value ${pnl >= 0 ? 'up' : 'down'}`;
         
         const roiCell = roiCells[index];
         const roiValue = roiCell.querySelector('.roi-value');
-        const roi = (pnl / (entryPrice * quantity)) * 100;
+        const roi = (pnl / (entryPrice * quantity)) * 100 ;
         roiValue.textContent = `${roi.toFixed(2)}%`;
         roiValue.className = `roi-value ${roi >= 0 ? 'up' : 'down'}`;
       }
@@ -3451,12 +3454,12 @@
             </div>
             <div class="card" style="flex:1;min-width:220px;">
                 <div class="glass-stat-label">Total Market Value</div>
-                <div class="glass-stat-value" style="color:#00ffae;">¥{{ '{:,.2f}'.format(total_market_value) }}</div>
+                <div class="glass-stat-value" style="color:#00ffae;">${{ '{:,.2f}'.format(total_market_value) }}</div>
                 <div class="progress-bar" style="width:65%;background:#00ffae;"></div>
             </div>
             <div class="card" style="flex:1;min-width:220px;">
                 <div class="glass-stat-label">Available Funds</div>
-                <div class="glass-stat-value" style="color:#faad14;">¥{{ '{:,.2f}'.format(available_funds) }}</div>
+                <div class="glass-stat-value" style="color:#faad14;">${{ '{:,.2f}'.format(available_funds) }}</div>
                 <div class="progress-bar" style="width:50%;background:#faad14;"></div>
             </div>
         </div>
@@ -3467,15 +3470,17 @@
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Market</th>
+                  <th>Direction</th>
                   <th>Symbol</th>
                   <th>Type</th>
-                  <th>Entry Price</th>
-                  <th>Current Price</th>
+                  <th style="font-size: 8px;">Entry</th>
+                  <th style="font-size: 8px;">Current</th>
                   <th>Quantity</th>
-                  <th>Exit Price</th>
+                  <th>Exit</th>
                   <th>Exit Date</th>
-                  <th>P&L Amount</th>
-                  <th>P&L Ratio</th>
+                  <th>Profit</th>
+                  <th>Ratio</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -3483,6 +3488,8 @@
                 {% for t in trades[:10] %}
                 <tr>
                   <td>{{ t.entry_date[:10] if t.entry_date else '-' }}</td>
+                   <td>{{ t.trade_market or '-' }}</td>
+                    <td>{% if t.direction==1 %}Long{%else%} Short {%endif%}</td>
                   <td>{{ t.symbol or '-' }}</td>
                   <td>
                     {% if t.exit_price %}
@@ -3491,21 +3498,21 @@
                       <span class="trade-type-table buy">Buy</span>
                     {% endif %}
                   </td>
-                  <td>{{ t.entry_price or '-' }}</td>
-                  <td>{{ t.current_price or '-' }}</td>
+                  <td>{{t.currency}}{{ t.entry_price or '-' }}</td>
+                  <td>{{t.currency}}{{ t.current_price or '-' }}</td>
                   <td>{{ t.size or '-' }}</td>
-                  <td>{{ t.exit_price or '-' }}</td>
+                  <td>{{t.currency}}{{ t.exit_price or '-' }}</td>
                   <td>{{ t.exit_date[:10] if t.exit_date else '-' }}</td>
-                  <td>
+                  <td>$
                     {% if t.exit_price %}
-                      {{ '%.2f' % ((t.exit_price - t.entry_price) * t.size) }}
+                      {{ '%.2f' % ((t.exit_price - t.entry_price) * t.size * t.direction/t.exchange_rate) }}
                     {% elif t.current_price %}
-                      {{ '%.2f' % ((t.current_price - t.entry_price) * t.size) }}
+                      {{ '%.2f' % ((t.current_price - t.entry_price) * t.size * t.direction/t.exchange_rate) }}
                     {% else %}-{% endif %}
                   </td>
                   <td>
                     {% set profit = (t.exit_price or t.current_price or 0) - (t.entry_price or 0) %}
-                    {% set profit_pct = (profit / t.entry_price * 100) if t.entry_price else 0 %}
+                    {% set profit_pct = (profit / t.entry_price * 100 * t.direction) if t.entry_price else 0 %}
                     <span class="trade-profit-table {{ 'up' if profit_pct >= 0 else 'down' }}">
                       {{ '{:+.1f}%'.format(profit_pct) }}
                     </span>
@@ -3635,13 +3642,13 @@
                             </span>
                         </td>
                         <td style="text-align:right;font-weight:900;">
-                            <span style="font-size:1.12rem;{% if user.total_profit > 0 %}color:#00ffae;{% elif user.total_profit < 0 %}color:#ff4d4f;{% else %}color:#b0c4e6;{% endif %}">
-                                {{ '{:,.2f}'.format(user.total_profit or 0) }}
+                            <span style="font-size:1.12rem;{% if user.utotle_profit > 0 %}color:#00ffae;{% elif user.utotle_profit < 0 %}color:#ff4d4f;{% else %}color:#b0c4e6;{% endif %}">
+                                {{ '{:,.2f}'.format(user.utotle_profit or 0) }}
                             </span>
                         </td>
                         <td style="text-align:right;font-weight:900;">
-                            <span style="font-size:1.12rem;{% if user.monthly_profit > 0 %}color:#52c41a;{% elif user.monthly_profit < 0 %}color:#ff4d4f;{% else %}color:#b0c4e6;{% endif %}">
-                                {{ '{:,.2f}'.format(user.monthly_profit or 0) }}
+                            <span style="font-size:1.12rem;{% if user.umonth_profit > 0 %}color:#52c41a;{% elif user.umonth_profit < 0 %}color:#ff4d4f;{% else %}color:#b0c4e6;{% endif %}">
+                                {{ '{:,.2f}'.format(user.umonth_profit or 0) }}
                             </span>
                         </td>
                     </tr>
@@ -3665,8 +3672,8 @@
               <span class="rank-level {{ membership_level_class(user.membership_level) }}" style="font-size:0.95rem;padding:2px 10px;border-radius:8px;background:#1a2236;margin-left:4px;min-width:80px;text-align:center;display:inline-block;">{{ user.membership_level|replace('黄金会员', 'Gold Member')|replace('钻石会员', 'Diamond Member')|replace('至尊黑卡', 'Supreme Black Card')|replace('普通会员', 'Regular Member')|replace('会员', 'VIP') }}</span>
             </div>
             <div class="rank-row-bottom" style="display:flex;justify-content:space-between;font-size:1.05em;margin-top:2px;">
-              <span class="rank-amount" style="color:{% if user.total_profit > 0 %}#00ffae{% elif user.total_profit < 0 %}#ff4d4f{% else %}#b0c4e6{% endif %};font-weight:900;font-size:1.08rem;">${{ '{:,.2f}'.format(user.total_profit or 0) }}</span>
-              <span class="rank-rate" style="color:{% if user.monthly_profit > 0 %}#52c41a{% elif user.monthly_profit < 0 %}#ff4d4f{% else %}#b0c4e6{% endif %};font-weight:900;font-size:1.08rem;">${{ '{:,.2f}'.format(user.monthly_profit or 0) }}</span>
+              <span class="rank-amount" style="color:{% if user.utotle_profit > 0 %}#00ffae{% elif user.utotle_profit < 0 %}#ff4d4f{% else %}#b0c4e6{% endif %};font-weight:900;font-size:1.08rem;">${{ '{:,.2f}'.format(user.utotle_profit or 0) }}</span>
+              <span class="rank-rate" style="color:{% if user.umonth_profit > 0 %}#52c41a{% elif user.umonth_profit < 0 %}#ff4d4f{% else %}#b0c4e6{% endif %};font-weight:900;font-size:1.08rem;">${{ '{:,.2f}'.format(user.umonth_profit or 0) }}</span>
             </div>
           </div>
           {% endfor %}
@@ -3998,7 +4005,7 @@ let allVideos = [];
 async function loadVideos() {
     const { data: videos, error } = await supabase
         .from('videos')
-        .select('*')
+        .select('*').eq("trader_uuid",Web_Trader_UUID)
         .order('last_update', { ascending: false });
     allVideos = videos || [];
     const container = document.getElementById('videos-container');
@@ -4038,11 +4045,11 @@ function formatEasternTime(dateStr) {
 
 function videoCardHtml(video, idx) {
     return `<div class="card" style="flex:1;min-width:320px;max-width:520px;">
-        <div style="height:360px;background:#232e4a;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
-            <video id="video-${idx}" src="${video.video_url}" controls style="width:100%;height:360px;border-radius:12px;background:#232e4a;"></video>
+        <div style="height:280px;background:#232e4a;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
+            <video id="video-${idx}" src="${video.video_url}" controls style="width:100%;height:280px;border-radius:12px;background:#232e4a;"></video>
         </div>
         <h4 style="color:#fff;margin-bottom:16px;">${video.title || ''}</h4>
-        <div style="color:#b0c4e6;margin-bottom:12px;">${video.description || ''}</div>
+        <div style="color:#b0c4e6;margin-bottom:12px;height:140px;overflow-y: scroll;">${video.description || ''}</div>
         <div style="color:#b0c4e6;margin-bottom:12px;">Last Updated: ${video.last_update ? formatEasternTime(video.last_update) : ''}</div>
         <button class="ant-btn ant-btn-primary styled-button w-100" onclick="playVideo('video-${idx}')">Start Learning</button>
     </div>`;
@@ -4109,7 +4116,7 @@ function renderDocumentsList(docs, container, showPreviewBtn = false) {
 async function loadDocuments() {
     const { data: documents, error } = await supabase
         .from('documents')
-        .select('*')
+        .select('*').eq("trader_uuid",Web_Trader_UUID)
         .order('last_update', { ascending: false });
     allDocuments = documents || [];
     const container = document.getElementById('documents-container');
@@ -4208,6 +4215,15 @@ document.addEventListener('DOMContentLoaded', loadDocuments);
         </div>
         <div class="modal-body">
           <div class="mb-3">
+            <label for="symbol" class="form-label">market</label>
+            <select class="form-control" name="Trade_market" id="Trade_market" required>
+                                <option value="">select market</option>
+                                 {% for market in marketdata%}
+                                 <option value="{{ market.marketname }}">{{ market.marketname }}</option>
+                                {% endfor %}
+                            </select>
+          </div>
+          <div class="mb-3">
             <label for="symbol" class="form-label">Symbol</label>
             <input name="symbol" id="symbol" class="form-control" required>
           </div>
@@ -4237,8 +4253,8 @@ document.addEventListener('DOMContentLoaded', loadDocuments);
             <label for="direction" class="form-label">Direction</label>
             <select name="direction" id="direction" class="form-control" required>
               <option value="">--Please select--</option>
-              <option value="long">Long</option>
-              <option value="short">Short</option>
+              <option value="1">Long</option>
+              <option value="-1">Short</option>
             </select>
           </div>
           <div class="mb-3">
@@ -4709,6 +4725,8 @@ function closePreview() {
             <thead>
               <tr>
                 <th>Date</th>
+                <th>Market</th>
+                 <th>Direction</th>
                 <th>Symbol</th>
                 <th>Type</th>
                 <th>Entry Price</th>
@@ -4725,6 +4743,8 @@ function closePreview() {
               {% for t in trades %}
               <tr>
                 <td>{{ t.entry_date[:10] if t.entry_date else '-' }}</td>
+                <td>{{ t.trade_market or '-' }}</td>
+                 <td>{{ t.direction or '-' }}</td>
                 <td>{{ t.symbol or '-' }}</td>
                 <td>
                   {% if t.exit_price %}

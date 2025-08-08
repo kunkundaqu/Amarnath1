@@ -1130,7 +1130,7 @@
                         <div class="podium-bottom-item">{{ traders[1].win_rate }}%<span class="podium-bottom-label">Win Rate</span></div>
                         <div class="podium-bottom-item"><i class="bi bi-people-fill icon-gold"></i> {{ traders[1].followers_count }}<span class="podium-bottom-label">Followers</span></div>
                         <div class="podium-bottom-item">
-                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[1].trader_name }}')"></i> 
+                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[1].id }}')"></i> 
                             <span class="likes-count">{{ traders[1].likes_count }}</span>
                             <span class="podium-bottom-label">Likes</span>
                         </div>
@@ -1151,7 +1151,7 @@
                         <div class="podium-bottom-item">{{ traders[0].win_rate }}%<span class="podium-bottom-label">Win Rate</span></div>
                         <div class="podium-bottom-item"><i class="bi bi-people-fill icon-gold"></i> {{ traders[0].followers_count }}<span class="podium-bottom-label">Followers</span></div>
                         <div class="podium-bottom-item">
-                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[0].trader_name }}')"></i> 
+                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[0].id }}')"></i> 
                             <span class="likes-count">{{ traders[0].likes_count }}</span>
                             <span class="podium-bottom-label">Likes</span>
                         </div>
@@ -1172,7 +1172,7 @@
                         <div class="podium-bottom-item">{{ traders[2].win_rate }}%<span class="podium-bottom-label">Win Rate</span></div>
                         <div class="podium-bottom-item"><i class="bi bi-people-fill icon-gold"></i> {{ traders[2].followers_count }}<span class="podium-bottom-label">Followers</span></div>
                         <div class="podium-bottom-item">
-                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[2].trader_name }}')"></i> 
+                            <i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('{{ traders[2].id }}')"></i> 
                             <span class="likes-count">{{ traders[2].likes_count }}</span>
                             <span class="podium-bottom-label">Likes</span>
                         </div>
@@ -1183,8 +1183,8 @@
             <!-- Mobile Carousel Animation -->
             <div class="mobile-podium-carousel">
                 <div class="carousel-track" id="carouselTrack">
-                    {% set top_traders = [traders[0], traders[1], traders[2]] %}
-                    {% for trader in top_traders %}
+                  
+                    {% for trader in traders[:3] %}
                     <div class="carousel-avatar-wrapper" data-index="{{ loop.index0 }}">
                         <div class="carousel-avatar">
                             <img src="{{ trader.profile_image_url }}" alt="{{ trader.trader_name }}">
@@ -1238,7 +1238,7 @@
                             <span class="stat-label">Members</span>
                         </div>
                         <div class="list-stat-item">
-                            <i class="bi bi-hand-thumbs-up-fill" style="cursor: pointer;" onclick="likeTrader('{{ trader.trader_name }}')"></i>
+                            <i class="bi bi-hand-thumbs-up-fill" style="cursor: pointer;" onclick="likeTrader('{{ trader.id }}')"></i>
                             <span class="likes-count">{{ trader.likes_count }}</span>
                             <span class="stat-label">Likes</span>
                         </div>
@@ -1308,7 +1308,7 @@
                 bottomRow.children[0].innerHTML = `${topThree[1].total_trades}<span class="podium-bottom-label">Trades</span>`;
                 bottomRow.children[1].innerHTML = `${topThree[1].win_rate}%<span class="podium-bottom-label">Win Rate</span>`;
                 bottomRow.children[2].innerHTML = `<i class="bi bi-people-fill icon-gold"></i> ${topThree[1].followers_count}<span class="podium-bottom-label">Followers</span>`;
-                bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[1].trader_name}')"></i> ${topThree[1].likes_count}<span class="podium-bottom-label">Likes</span>`;
+                bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[1].id}')"></i> ${topThree[1].likes_count}<span class="podium-bottom-label">Likes</span>`;
             }
         }
 
@@ -1323,7 +1323,7 @@
             bottomRow.children[0].innerHTML = `${topThree[0].total_trades}<span class="podium-bottom-label">Trades</span>`;
             bottomRow.children[1].innerHTML = `${topThree[0].win_rate}%<span class="podium-bottom-label">Win Rate</span>`;
             bottomRow.children[2].innerHTML = `<i class="bi bi-people-fill icon-gold"></i> ${topThree[0].followers_count}<span class="podium-bottom-label">Followers</span>`;
-            bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[0].trader_name}')"></i> ${topThree[0].likes_count}<span class="podium-bottom-label">Likes</span>`;
+            bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[0].id}')"></i> ${topThree[0].likes_count}<span class="podium-bottom-label">Likes</span>`;
         }
 
         // Update third place
@@ -1338,7 +1338,7 @@
                 bottomRow.children[0].innerHTML = `${topThree[2].total_trades}<span class="podium-bottom-label">Trades</span>`;
                 bottomRow.children[1].innerHTML = `${topThree[2].win_rate}%<span class="podium-bottom-label">Win Rate</span>`;
                 bottomRow.children[2].innerHTML = `<i class="bi bi-people-fill icon-gold"></i> ${topThree[2].followers_count}<span class="podium-bottom-label">Followers</span>`;
-                bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[2].trader_name}')"></i> ${topThree[2].likes_count}<span class="podium-bottom-label">Likes</span>`;
+                bottomRow.children[3].innerHTML = `<i class="bi bi-hand-thumbs-up-fill icon-gold" style="cursor: pointer;" onclick="likeTrader('${topThree[2].id}')"></i> ${topThree[2].likes_count}<span class="podium-bottom-label">Likes</span>`;
             }
         }
     }
@@ -1451,7 +1451,7 @@
                             <span class="stat-label">Members</span>
                         </div>
                         <div class="list-stat-item">
-                            <i class="bi bi-hand-thumbs-up-fill" style="cursor: pointer;" onclick="likeTrader('${trader.trader_name}')"></i>
+                            <i class="bi bi-hand-thumbs-up-fill" style="cursor: pointer;" onclick="likeTrader('${trader.id}')"></i>
                             <span class="likes-count">${trader.likes_count}</span>
                             <span class="stat-label">Likes</span>
                         </div>
@@ -1629,11 +1629,15 @@
     });
 
     function likeTrader(traderName) {
-        fetch(`/api/like-trader/${traderName}`, {
+          const data = {
+                id: traderName
+          }
+        fetch('/api/like-trader', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
         .then(data => {

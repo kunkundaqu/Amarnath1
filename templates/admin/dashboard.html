@@ -257,8 +257,8 @@
                     <div class="position-sticky">
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="showSection('strategy')">
-                                    <i class="bi bi-lightbulb"></i>Trading Strategy
+                                <a class="nav-link active" href="#" onclick="showSection('Trader')">
+                                    <i class="bi bi-people-fill"></i>Trader Management
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -266,9 +266,19 @@
                                     <i class="bi bi-people-fill"></i>User Management
                                 </a>
                             </li>
+                             <li class="nav-item">
+                                <a class="nav-link active" href="#" onclick="showSection('whatsapp')">
+                                    <i class="bi bi-people-fill"></i>whatsapp Management
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" onclick="showSection('membership')">
                                     <i class="bi bi-award-fill"></i>Membership Level
+                                </a>
+                            </li>
+                             <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showSection('strategy')">
+                                    <i class="bi bi-lightbulb"></i>Trading Strategy
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -311,6 +321,70 @@
                 </nav>
 
                 <main class="col-md-9 col-lg-10 main-content">
+                    <div id="Trader-section" class="section-content">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">Trader Management</h5>
+                                {%if createTrader==""%}
+                                <button class="btn btn-primary" onclick="showCreateTraderModal()">
+                                    <i class="bi bi-plus"></i> Create Trader
+                                </button>
+                                {%endif%}
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Trader UUID</th>
+                                                <th>Trader Name</th>
+                                                <th>Professional Title</th>
+                                                <th>Years of Experience</th>
+                                                <th>Win Rate</th>
+                                                <th>Website Title</th>
+                                                <th>Home Top Title</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="Trader-table-body">
+                                            <!-- User list will be dynamically loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="whatsapp-section" class="section-content">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">whatsapp Management</h5>
+                                <button class="btn btn-primary" onclick="showCreatewhatsappModal(null)">
+                                    <i class="bi bi-plus"></i> Create whatsapp
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>phone number</th>
+                                                <th>Name</th>
+                                                <th>Active</th>
+                                               
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="whatsapp-table-body">
+                                            <!-- User list will be dynamically loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="users-section" class="section-content">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -423,7 +497,9 @@
                                         <thead>
                                             <tr>
                                                 <th>Trade ID</th>
+                                                <th>Market</th>
                                                 <th>Stock Code</th>
+                                                <th>Direction</th>
                                                 <th>Entry Price</th>
                                                 <th>Exit Price</th>
                                                 <th>Quantity</th>
@@ -606,8 +682,11 @@
 
                     <div id="vip-announcements-section" class="section-content" style="display:none;">
                         <div class="card">
-                            <div class="card-header">
+                               <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title">VIP Investment Strategy Announcement Management</h5>
+                                 <button class="btn btn-primary" onclick="openEditAnnouncementModal(0)">
+                                    <i class="bi bi-plus"></i> Add New VIP Strategy
+                                </button>
                             </div>
                             <div class="card-body" id="vip-announcements-body">
                                 <!-- Announcements content will be dynamically loaded via JS -->
@@ -623,12 +702,127 @@
                                     <i class="bi bi-plus"></i> Add New Trading Record
                                 </button>
                             </div>
-                            <div class="card-body" id="vip-trades-body">
-                                <!-- Trading records content will be dynamically loaded via JS -->
+                            <div class="card-body">
+                                 <div class="table-responsive">
+                                    <table class="table" style="table-layout:auto;width:100%;min-width:700px;">
+                                        <thead>
+                                            <tr>
+                                                <th>Market</th>
+                                                <th>symbol</th>
+                                                <th>asset type</th>
+                                                <th>direction</th>
+                                                <th>entry price</th>
+                                                <th>quantity</th>
+                                                <th>current price</th>
+                                                <th>exit price</th>
+                                                <th>entry time</th>
+                                                <th>exit time</th>
+                                                  <th style="width:80px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vip-trades-body">
+                                            <!-- Video list will be dynamically loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Trader Modal -->
+    <div class="modal fade" id="createTraderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Trader</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createTraderForm">
+                        <input type="hidden" class="form-control" name="trader_uuid" id="trader_uuid">
+                        <input type="hidden" class="form-control" name="traderid" id="traderid" value="0">
+                        <div class="mb-3">
+                            <label class="form-label">Avatar Url</label>
+                            <input type="text" class="form-control" name="profile_image_url" id="profile_image_url" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trader Name</label>
+                            <input type="text" class="form-control" name="trader_name" id="trader_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Professional Title</label>
+                            <input type="text" class="form-control" name="professional_title" id="professional_title">
+                        </div>
+                        <div class="mb-3">
+                           <label class="form-label">Years Of Experience</label>
+                            <input type="text" class="form-control" name="years_of_experience" id="years_of_experience">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Win Rate</label>
+                            <input type="number" class="form-control" name="win_rate" id="win_rate" step="0.01" min="0" value="0">
+                        </div>
+                          <div class="mb-3">
+                            <label class="form-label">Members Count</label>
+                            <input type="number" class="form-control" name="members_count" id="members_count" step="0.01" min="0" value="0">
+                        </div>
+                          <div class="mb-3">
+                            <label class="form-label">Likes Count</label>
+                            <input type="number" class="form-control" name="likes_count" id="likes_count" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Website Title</label>
+                            <input type="text" class="form-control" name="website_title" id="website_title">
+                        </div>
+                         <div class="mb-3">
+                          <label class="form-label">home top title</label>
+                          <input type="text" class="form-control" name="home_top_title" id="home_top_title">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createTrader()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Create whatsapp -->
+    <div class="modal fade" id="createwhatsappModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit whatsapp</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createwhatsappForm">
+                        <input type="hidden" class="form-control" name="whatsappid" id="whatsappid" value="">
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" name="whatsappphone_number" id="whatsappphone_number" required>
+                        </div>
+                          <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="whatsappname" id="whatsappname" required>
+                        </div>
+                         <div class="mb-3">
+                            <label class="form-label">Active</label>
+                            <select class="form-select" name="whatsappis_active" id="whatsappis_active">
+                                <option value="true">True</option>
+                                <option value="fasle">False</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createwhatsapp()">Save</button>
+                </div>
             </div>
         </div>
     </div>
@@ -670,6 +864,10 @@
                           <label class="form-label">Initial Asset</label>
                           <input type="number" class="form-control" name="initial_asset" step="0.01" min="0" value="0">
                         </div>
+                         <div class="mb-3">
+                          <label class="form-label">trader uuid</label>
+                          <input type="text" class="form-control" name="trader_uuid" >
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -690,10 +888,13 @@
                 </div>
                 <div class="modal-body">
                     <form id="changeAvatarForm">
-                        <input type="hidden" id="avatarUserId" name="user_id">
+                        <input type="hidden" id="idname" name="idname">
+                        <input type="hidden" id="avatarUserId" name="avatarUserId">
+                         <input type="hidden" id="tablename" name="tablename">
+                          <input type="hidden" id="filedname" name="filedname">
                         <div class="mb-3">
                             <label class="form-label">Select New Avatar</label>
-                            <input type="file" class="form-control" name="avatar" accept="image/*" required>
+                            <input type="file" class="form-control" name="avatar" id="avatar" accept="image/*" required>
                         </div>
                         <div class="text-center">
                             <img id="avatarPreview" src="" alt="Avatar Preview" style="max-width: 200px; max-height: 200px; display: none; margin: 10px auto; border-radius: 50%;">
@@ -786,9 +987,28 @@
                 </div>
                 <div class="modal-body">
                     <form id="addTradeForm">
+                         <div class="mb-3">
+                            <label class="form-label">Trade market</label>
+                            <select class="form-control" name="Trade_market" id="create_Trade_market" required>
+                                <option value="">select market</option>
+                                 {% for market in marketdata%}
+                                 <option value="{{ market.marketname }}">{{ market.marketname }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Stock Code</label>
                             <input type="text" class="form-control" name="symbol" required>
+                        </div>
+                         <div class="mb-3">
+                            <label class="form-label">Direction</label>
+                            <select class="form-control" name="Trade_market" id="create_Trade_market" required>
+                                <option value="">select Direction</option>
+                               
+                                 <option value="1">long</option>
+                                 <option value="-1">short</option>
+                             
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Entry Price</label>
@@ -864,8 +1084,8 @@
                         <div class="mb-3">
                             <label class="form-label">Direction</label>
                             <select class="form-control" name="direction" id="editTradeDirection" required>
-                                <option value="Buy">Buy</option>
-                                <option value="Sell">Sell</option>
+                                <option value="1">long</option>
+                                <option value="-1">short</option>
                             </select>
                         </div>
                     </form>
@@ -889,13 +1109,17 @@
                 <div class="modal-body">
                     <form id="leaderboardForm">
                         <input type="hidden" id="leaderboardId">
-                        <div class="mb-3">
+                        <div class="mb-3" style="display: none;">
                             <label class="form-label">Avatar URL</label>
                             <input type="text" class="form-control" id="profileImageUrl" name="profile_image_url">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Trader Name</label>
                             <input type="text" class="form-control" id="traderName" name="trader_name" required>
+                        </div>
+                         <div class="mb-3">
+                            <label class="form-label">Professional Title</label>
+                            <input type="text" class="form-control" id="Lprofessional_title" name="Lprofessional_title" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Membership Level</label>
@@ -917,6 +1141,14 @@
                         <div class="mb-3">
                             <label class="form-label">Win Rate (%)</label>
                             <input type="number" class="form-control" id="winRate" name="win_rate" min="0" max="100" step="0.01" required>
+                        </div>
+                         <div class="mb-3">
+                            <label class="form-label">followers count</label>
+                            <input type="number" class="form-control" id="followers_count" name="followers_count" required>
+                        </div>
+                         <div class="mb-3">
+                            <label class="form-label">likes count</label>
+                            <input type="number" class="form-control" id="likes_count" name="likes_count" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Trades</label>
@@ -1052,21 +1284,30 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <div class="mb-3">
+                            <label class="form-label">Trade market</label>
+                            <select class="form-control" name="Trade_market" id="create_Trade_market" required style="color: #000000;">
+                                <option value="">select market</option>
+                                 {% for market in marketdata%}
+                                 <option value="{{ market.marketname }}">{{ market.marketname }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
               <div class="mb-3"><label>Underlying</label><input name="symbol" id="tradeSymbol" class="form-control" required></div>
               <div class="mb-3"><label>Asset Type</label>
                 <select name="asset_type" id="tradeAssetType" class="form-control" required>
                   <option value="">--Please select--</option>
-                  <option value="股票">股票</option>
-                  <option value="基金">基金</option>
-                  <option value="加密货币">加密货币</option>
-                  <option value="外汇">外汇</option>
+                  <option value="stock">stock</option>
+                  <option value="fund">fund</option>
+                  <option value="Crypto">Crypto</option>
+                  <option value="forex">forex</option>
                 </select>
               </div>
               <div class="mb-3"><label>Direction</label>
                 <select name="direction" id="tradeDirection" class="form-control" required>
                   <option value="">--Please select--</option>
-                  <option value="买涨">买涨</option>
-                  <option value="买跌">买跌</option>
+                  <option value="1">long</option>
+                  <option value="-1">short</option>
                 </select>
               </div>
               <div class="mb-3"><label>Entry Time</label>
@@ -1132,6 +1373,10 @@
                 <label class="form-label">初始资产</label>
                 <input type="number" class="form-control" name="initial_asset" id="edit_initial_asset" step="0.01" min="0">
               </div>
+               <div class="mb-3" style="display: none;">
+                <label class="form-label">交易员uuid</label>
+                <input type="text" class="form-control" name="trader_uuid" id="edit_trader_uuid">
+              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -1163,7 +1408,7 @@
                                             <img src="${user.avatar_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}" 
                                                  class="rounded-circle me-2" 
                                                  style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;"
-                                                 onclick="showChangeAvatarModal('${user.id}', '${user.avatar_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}')"
+                                                 onclick="showChangeAvatarModal('id','${user.id}', '${user.avatar_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}','users','avatar_url')"
                                                  onerror="this.src='https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'"
                                                  alt="${user.username}">
                                             ${user.username}
@@ -1180,6 +1425,86 @@
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button class="btn btn-action btn-danger" onclick="deleteUser('${user.id}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+         // Load user list
+        function loadTrader() {
+            fetch('/api/admin/trader')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const tbody = document.getElementById('Trader-table-body');
+                        tbody.innerHTML = '';
+                        data.users.forEach(user => {
+                          
+                            tbody.innerHTML += `
+                                <tr>
+                                     <td>${user.trader_uuid}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="${user.profile_image_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}" 
+                                                 class="rounded-circle me-2" 
+                                                 style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;"
+                                                 onclick="showChangeAvatarModal('id','${user.id}', '${user.profile_image_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}','trader_profiles','profile_image_url')"
+                                                 onerror="this.src='https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'"
+                                                 alt="${user.trader_name}">
+                                            ${user.trader_name}
+                                        </div>
+                                    </td>
+                                    <td>${user.professional_title}</td>
+                                    <td>${user.years_of_experience}</td>
+                                    <td>${user.win_rate || '-'}</td>
+                                    <td>${user.website_title || '-'}</td>
+                                    <td>${user.home_top_title}</td>
+                                    <td>
+                                        <button class="btn btn-action btn-primary" onclick="editTrader('${user.id}')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                       
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Load user list
+        function loadwhatsapp() {
+            fetch('/api/admin/whatsapp-agents')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    if (data.success) {
+                        const tbody = document.getElementById('whatsapp-table-body');
+                        tbody.innerHTML = '';
+                        data.agents.forEach(user => {
+                          
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td>${user.id}</td>
+                                  
+                                    <td>${user.phone_number}</td>
+                                    <td>${user.name}</td>
+                                    <td>${user.is_active}</td>
+                                    <td>
+                                        <button class="btn btn-action btn-primary" onclick="showCreatewhatsappModal('${user.id}','${user.name}','${user.phone_number}','${user.is_active}')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-danger" onclick="deletewhatsapp('${user.id}')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -1272,8 +1597,15 @@
                 case 'users':
                     loadUsers();
                     break;
+                case 'Trader':
+                    loadTrader();
+                    break;
+                case 'whatsapp':
+                    loadwhatsapp();
+                    break;
                 case 'trading':
                     loadTrades();
+                   
                     break;
                 case 'leaderboard':
                     loadLeaderboard();
@@ -1313,8 +1645,11 @@
                         data.trades.forEach(trade => {
                             const row = document.createElement('tr');
                             row.innerHTML = `
+                              
                                 <td>${trade.id}</td>
+                                <td>${trade.trade_market}</td>
                                 <td>${trade.symbol}</td>
+                                <td>  <span class="status-badge ${trade.Direction==1 ? 'status-active' : 'status-inactive'}">${trade.Direction==1?"long":"short"} </span></td>
                                 <td>${trade.entry_price}</td>
                                 <td>${trade.exit_price || '-'}</td>
                                 <td>${trade.size}</td>
@@ -1383,12 +1718,12 @@
             
             // Fill form data
             document.getElementById('edit_trade_id').value = tradeId;
-            document.getElementById('edit_symbol').value = cells[1].textContent.trim();
-            document.getElementById('edit_entry_price').value = cells[2].textContent.trim();
-            document.getElementById('edit_exit_price').value = cells[3].textContent.trim() !== '-' ? cells[3].textContent.trim() : '';
-            document.getElementById('edit_size').value = cells[4].textContent.trim();
-            document.getElementById('edit_entry_date').value = formatDateForInput(cells[5].textContent.trim());
-            document.getElementById('edit_exit_date').value = cells[6].textContent.trim() !== '-' ? formatDateForInput(cells[6].textContent.trim()) : '';
+            document.getElementById('edit_symbol').value = cells[2].textContent.trim();
+            document.getElementById('edit_entry_price').value = cells[4].textContent.trim();
+            document.getElementById('edit_exit_price').value = cells[5].textContent.trim() !== '-' ? cells[5].textContent.trim() : '';
+            document.getElementById('edit_size').value = cells[6].textContent.trim();
+            document.getElementById('edit_entry_date').value = formatDateForInput(cells[7].textContent.trim());
+            document.getElementById('edit_exit_date').value = cells[8].textContent.trim() !== '-' ? formatDateForInput(cells[8].textContent.trim()) : '';
             
             // Show edit modal
             const editModal = new bootstrap.Modal(document.getElementById('editTradeModal'));
@@ -1419,6 +1754,35 @@
                     if(data.success) {
                         alert('Delete successful');
                         loadTrades();
+                    } else {
+                        alert('Delete failed: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting trade:', error);
+                    alert('Delete failed, please try again later');
+                });
+            }
+        }
+
+        
+
+        // Delete trade
+        function deletewhatsapp(tradeId) {
+            if(confirm('Are you sure you want to delete this whatsapp?')) {
+                fetch('/api/admin/whatsapp-agents?id='+tradeId, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if(data.success) {
+                        alert('Delete successful');
+                        loadwhatsapp();
                     } else {
                         alert('Delete failed: ' + (data.message || 'Unknown error'));
                     }
@@ -1494,8 +1858,10 @@
                                 <td class="text-center">${index + 1}</td>
                                 <td class="text-center">
                                     <img src="${trader.profile_image_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}" 
-                                         style="width:40px;height:40px;object-fit:cover;border-radius:50%;background:#eee;" 
+                                         style="width:40px;height:40px;object-fit:cover;border-radius:50%;background:#eee;cursor: pointer;" 
+                                         
                                          onerror="this.src='https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'"
+                                         onclick="showChangeAvatarModal('id','${trader.id}', '${trader.profile_image_url || 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'}','leaderboard_traders','profile_image_url')"
                                          alt="${trader.trader_name}"/>
                                 </td>
                                 <td>${trader.trader_name || ''}</td>
@@ -1505,12 +1871,10 @@
                                 <td class="text-end">${trader.win_rate?.toFixed(2) || '0.00'}%</td>
                                 <td class="text-end">${trader.total_trades || 0}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info me-1" onclick="showEditLeaderboardModal('${trader.id}', '${trader.profile_image_url}', '${trader.trader_name}', '${trader.membership_level}', ${trader.total_profit}, ${trader.monthly_profit}, ${trader.win_rate}, ${trader.total_trades})">
+                                    <button class="btn btn-sm btn-info me-1" onclick="showEditLeaderboardModal('${trader.id}', '${trader.profile_image_url}', '${trader.trader_name}', '${trader.professional_title}', '${trader.membership_level}', ${trader.total_profit}, ${trader.monthly_profit}, ${trader.win_rate}, ${trader.total_trades}, ${trader.likes_count}, ${trader.followers_count})">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteLeaderboardRecord('${trader.id}')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                  
                                 </td>
                             `;
                             leaderboardList.appendChild(row);
@@ -1534,16 +1898,19 @@
         }
 
         // 显示编辑排行榜记录模态框
-        function showEditLeaderboardModal(id, profileImageUrl, traderName, membershipLevel, totalProfit, monthlyProfit, winRate, totalTrades) {
+        function showEditLeaderboardModal(id, profileImageUrl, traderName,professional_title, membershipLevel, totalProfit, monthlyProfit, winRate, totalTrades,likes_count,followers_count) {
             document.getElementById('leaderboardModalTitle').textContent = '编辑排行榜记录';
             document.getElementById('leaderboardId').value = id;
             document.getElementById('profileImageUrl').value = profileImageUrl;
             document.getElementById('traderName').value = traderName;
+            document.getElementById('Lprofessional_title').value = professional_title;
             document.getElementById('membershipLevel').value = membershipLevel;
             document.getElementById('totalProfit').value = totalProfit;
             document.getElementById('monthlyProfit').value = monthlyProfit;
             document.getElementById('winRate').value = winRate;
             document.getElementById('totalTrades').value = totalTrades;
+            document.getElementById('followers_count').value = followers_count;
+            document.getElementById('likes_count').value = likes_count;
             new bootstrap.Modal(document.getElementById('leaderboardModal')).show();
         }
 
@@ -1553,11 +1920,14 @@
             const data = {
                 profile_image_url: document.getElementById('profileImageUrl').value,
                 trader_name: document.getElementById('traderName').value,
+                professional_title: document.getElementById('Lprofessional_title').value,
                 membership_level: document.getElementById('membershipLevel').value,
                 total_profit: parseFloat(document.getElementById('totalProfit').value),
                 monthly_profit: parseFloat(document.getElementById('monthlyProfit').value),
                 win_rate: parseFloat(document.getElementById('winRate').value),
-                total_trades: parseInt(document.getElementById('totalTrades').value)
+                total_trades: parseInt(document.getElementById('totalTrades').value),
+                followers_count: parseInt(document.getElementById('followers_count').value),
+                likes_count: parseInt(document.getElementById('likes_count').value)
             };
             
             let method = 'POST';
@@ -1628,7 +1998,8 @@
                 email: formData.get('email'),
                 role: formData.get('role'),
                 initial_asset: formData.get('initial_asset'),
-                membership_level: formData.get('membership_level')
+                membership_level: formData.get('membership_level'),
+                trader_uuid:formData.get('trader_uuid')
             };
 
             fetch('/api/admin/users', {
@@ -1645,6 +2016,77 @@
                     form.reset();
                     bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
                     loadUsers();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+         // 编辑表交易员
+        function createTrader() {
+            const form = document.getElementById('createTraderForm');
+            const formData = new FormData(form);
+          
+            const data = {
+                id: formData.get('traderid'),
+                profile_image_url: formData.get('profile_image_url'),
+                trader_name: formData.get('trader_name'),
+                professional_title: formData.get('professional_title'),
+                years_of_experience: formData.get('years_of_experience'),
+                win_rate: formData.get('win_rate'),
+                website_title:formData.get('website_title'),
+                home_top_title:formData.get('home_top_title'),
+                members_count:formData.get('members_count'),
+                likes_count:formData.get('likes_count'),
+                trader_uuid:formData.get('trader_uuid')
+            };
+            console.log(data);
+            fetch('/api/admin/trader', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User created successfully');
+                    form.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('createTraderModal')).hide();
+                    loadTrader()
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+         // 编辑表whatsapp
+        function createwhatsapp() {
+            const form = document.getElementById('createwhatsappForm');
+            const formData = new FormData(form);
+          
+            const data = {
+                id: formData.get('whatsappid'),
+                phone_number: formData.get('whatsappphone_number'),
+                name: formData.get('whatsappname'),
+                is_active:formData.get('whatsappis_active')
+            };
+            console.log(data);
+            fetch('/api/admin/whatsapp-agents', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User created successfully');
+                    form.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('createwhatsappModal')).hide();
+                    loadwhatsapp()
                 } else {
                     alert(data.message);
                 }
@@ -1695,6 +2137,24 @@
                     alert(data.message);
                 }
             });
+        }
+         // 显示创建交易员模态框
+        function showCreateTraderModal() {
+            loadMembershipLevelsForCreate();
+            new bootstrap.Modal(document.getElementById('createTraderModal')).show();
+        }
+         // 显示创建交易员模态框
+        function showCreatewhatsappModal(id,name,pthone,active) {
+            if(id!=null)
+            {
+                console.log(active)
+                document.getElementById('whatsappid').value=id;
+                document.getElementById('whatsappname').value=name;
+                document.getElementById('whatsappphone_number').value=pthone;
+                 document.getElementById('whatsappis_active').value=active;
+
+            }
+            new bootstrap.Modal(document.getElementById('createwhatsappModal')).show();
         }
 
         // 显示创建用户模态框
@@ -1893,11 +2353,13 @@
             }
             const formData = new FormData(form);
             const data = {
+                trade_market: formData.get('Trade_market'),
                 symbol: formData.get('symbol'),
                 entry_price: parseFloat(formData.get('entry_price')),
                 size: parseInt(formData.get('size')),
                 entry_date: formData.get('entry_date')
             };
+            console.log(data)
             fetch('/api/admin/trading', {
                 method: 'POST',
                 headers: {
@@ -2283,8 +2745,11 @@
         });
 
         // 显示修改头像模态框
-        function showChangeAvatarModal(userId, currentAvatar) {
+        function showChangeAvatarModal(idname,userId, currentAvatar,tablename,filedname) {
+            document.getElementById('idname').value = idname;
             document.getElementById('avatarUserId').value = userId;
+            document.getElementById('tablename').value = tablename;
+            document.getElementById('filedname').value = filedname;
             document.getElementById('avatarPreview').src = currentAvatar;
             document.getElementById('avatarPreview').style.display = 'block';
             new bootstrap.Modal(document.getElementById('changeAvatarModal')).show();
@@ -2306,6 +2771,8 @@
                     bootstrap.Modal.getInstance(document.getElementById('changeAvatarModal')).hide();
                     // 刷新用户列表
                     loadUsers();
+                    loadTrader();
+                    loadLeaderboard();
                 } else {
                     alert(data.message || 'Failed to update avatar');
                 }
@@ -2390,10 +2857,25 @@
         }
 
         function openEditAnnouncementModal(announcementId) {
-            const announcement = announcementsData.find(a => a.id === announcementId);
-            if (!announcement) {
-                console.error('Announcement not found for ID:', announcementId);
-                return;
+            if(announcementId!=0)
+            {
+                const announcement = announcementsData.find(a => a.id === announcementId);
+                if (!announcement) {
+                    console.error('Announcement not found for ID:', announcementId);
+                    return;
+                }
+            }
+            else
+            {
+                announcement={
+                    'id':0,
+                    'title':'',
+                    'content':'',
+                    'type':'',
+                    'publisher':'',
+                    'priority':'',
+                    'date':'',
+                };
             }
 
             // 使用HTML中正确的ID
@@ -2504,28 +2986,21 @@
                         vipTradesBody.innerHTML = '';
                         data.trades.forEach(trade => {
                             vipTradesBody.innerHTML += `
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title">${trade.symbol} <span class="badge bg-secondary ms-2">${trade.asset_type || ''}</span></h5>
-                                        <p class="card-text mb-1"><b>方向：</b>${trade.direction || '-'}</p>
-                                        <p class="card-text mb-1"><b>买入时间：</b>${trade.entry_time || '-'}</p>
-                                        <p class="card-text mb-1"><b>买入价：</b>${trade.entry_price || '-'}</p>
-                                        <p class="card-text mb-1"><b>买入数量：</b>${trade.quantity || '-'}</p>
-                                        <p class="card-text mb-1"><b>当前价：</b>${trade.current_price || '-'}</p>
-                                        <p class="card-text mb-1"><b>卖出价(exit_price)：</b>${trade.exit_price || '-'}</p>
-                                        <p class="card-text mb-1"><b>卖出时间(exit_time)：</b>${trade.exit_time || '-'}</p>
-                                        <p class="card-text mb-1"><b>状态(status)：</b>${trade.status || '-'}</p>
-                                        <p class="card-text mb-1"><b>盈亏(PnL)：</b>${trade.pnl || '-'}</p>
-                                        <p class="card-text mb-1"><b>收益率(ROI)：</b>${trade.roi || '-'}</p>
-                                        <p class="card-text mb-1"><b>创建人(created_by)：</b>${trade.created_by || '-'}</p>
-                                        <p class="card-text mb-1"><b>创建时间(created_at)：</b>${trade.created_at || '-'}</p>
-                                        <p class="card-text mb-1"><b>更新时间(updated_at)：</b>${trade.updated_at || '-'}</p>
-                                        <p class="card-text mb-1"><b>备注(notes)：</b>${trade.notes || '-'}</p>
-                                        <p class="card-text mb-1"><b>trade_type：</b>${trade.trade_type || '-'}</p>
-                                        <button class="btn btn-sm btn-primary mt-2" onclick='showEditVipTradeModal(${JSON.stringify(trade)})'>编辑</button>
-                                        <button class="btn btn-sm btn-danger mt-2 ms-2" onclick="deleteVipTrade(${trade.id})">删除</button>
-                                    </div>
-                                </div>
+                                            <tr>
+                                                 <th>${trade.trade_market} </th>
+                                                <th>${trade.symbol} </th>
+                                                <th>${trade.asset_type || ''}</th>
+                                                <th><span class="status-badge ${trade.direction==1 ? 'status-active' : 'status-inactive'}">${trade.direction==1?"long":"short"}<span></th>
+                                                <th>${trade.entry_price || '-'}</th>
+                                                <th>${trade.quantity || '-'}</th>
+                                                <th>${trade.current_price || '-'}</th>
+                                                <th>${trade.exit_price || '-'}</th>
+                                                <th>${trade.entry_time || '-'}</th>
+                                                <th>${trade.exit_time || '-'}</th>
+                                                  <th style="width:80px;"> <button class="btn btn-sm btn-primary mt-2" onclick='showEditVipTradeModal(${JSON.stringify(trade)})'>编辑</button>
+                                        <button class="btn btn-sm btn-danger mt-2 ms-2" onclick="deleteVipTrade(${trade.id})">删除</button></th>
+                                            </tr>
+                              
                             `;
                         });
                     } else {
@@ -2595,6 +3070,7 @@
           let exit_time = formData.get('exit_time');
           if(exit_time) exit_time = exit_time.replace(/\//g, '-').replace(' ', 'T');
           const data = {
+            trade_market: formData.get('Trade_market'),
             symbol: formData.get('symbol'),
             asset_type: formData.get('asset_type'),
             direction: formData.get('direction'),
@@ -2604,7 +3080,7 @@
             status: formData.get('status') || null,
             exit_price: formData.get('exit_price') ? parseFloat(formData.get('exit_price')) : null,
             exit_time: exit_time || null,
-            trade_type: 'buy'
+            trade_type: 'long'
           };
           console.log('最终提交数据', data);
           fetch('/api/admin/vip-trades', {
@@ -2675,6 +3151,28 @@
               }
             });
         }
+        function editTrader(userId) {
+          fetch(`/api/admin/trader?id=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.users && data.users.length > 0) {
+                const user = data.users[0];
+                console.log(user)
+                document.getElementById('traderid').value = user.id; // 强制用参数userId，确保正确
+                document.getElementById('profile_image_url').value = user.profile_image_url;
+                document.getElementById('trader_name').value = user.trader_name || '';
+                document.getElementById('professional_title').value = user.professional_title || '';
+                document.getElementById('years_of_experience').value = user.years_of_experience;
+                document.getElementById('win_rate').value = user.win_rate !== undefined ? user.win_rate : 0;
+                document.getElementById('website_title').value = user.website_title;
+                document.getElementById('home_top_title').value = user.home_top_title;
+                document.getElementById('members_count').value = user.members_count;
+                document.getElementById('likes_count').value = user.likes_count;
+                document.getElementById('trader_uuid').value = user.trader_uuid;
+                showCreateTraderModal();
+              }
+            });
+        }
 
         function editUser(userId) {
           fetch(`/api/admin/users?id=${userId}`)
@@ -2682,10 +3180,12 @@
             .then(data => {
               if (data.success && data.users && data.users.length > 0) {
                 const user = data.users[0];
+               
                 document.getElementById('edit_user_id').value = userId; // 强制用参数userId，确保正确
                 document.getElementById('edit_username').value = user.username;
                 document.getElementById('edit_email').value = user.email || '';
                 document.getElementById('edit_role').value = user.role || '';
+                document.getElementById('edit_trader_uuid').value = user.trader_uuid;
                 document.getElementById('edit_initial_asset').value = user.initial_asset !== undefined ? user.initial_asset : 0;
                 // 加载会员等级选项
                 fetch('/api/admin/membership-levels')
@@ -2711,10 +3211,11 @@
           const userId = document.getElementById('edit_user_id').value;
           const initialAsset = document.getElementById('edit_initial_asset').value;
           const membershipLevel = document.getElementById('edit_membership_level').value;
+          const trader_uuid = document.getElementById('edit_trader_uuid').value;
           fetch(`/api/admin/users/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initial_asset: initialAsset, membership_level: membershipLevel })
+            body: JSON.stringify({ initial_asset: initialAsset, membership_level: membershipLevel,trader_uuid:trader_uuid })
           })
           .then(res => res.json())
           .then(data => {
@@ -2797,6 +3298,7 @@
               }
             });
         }
+       
     </script>
 </body>
 </html> 

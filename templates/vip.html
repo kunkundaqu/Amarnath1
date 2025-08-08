@@ -872,6 +872,9 @@
             display: flex; align-items: center; justify-content: center;
             pointer-events: none;
         }
+        .h3Height{
+            height: 80px;
+        }
     </style>
 </head>
 <body>
@@ -1016,8 +1019,9 @@
             <!-- Regular Member Card -->
             <div class="membership-card-wrapper">
                 <div class="membership-card text-center">
+                   
                     <i class="bi bi-star-fill card-icon"></i>
-                    <h3>{% if 'username' in session %}Regular Member{% else %}Regular Member{% endif %}</h3>
+                    <h3 class="h3Height">{% if 'username' in session %}Regular Member{% else %}Regular Member{% endif %}</h3>
                     <div class="card-requirement">Trading Volume < $50,000</div>
                     <ul class="feature-list">
                         <li><i class="bi bi-check-circle-fill"></i> Basic Trading Tools</li>
@@ -1035,8 +1039,8 @@
             <div class="membership-card-wrapper">
                 <div class="membership-card premium text-center">
                     <span class="vip-badge">Current Popular</span>
-                    <i class="bi bi-crown-fill card-icon"></i>
-                    <h3>{% if 'username' in session %}Gold Member{% else %}Gold Member{% endif %}</h3>
+                    <i class="bi bi-star-fill card-icon"></i>
+                    <h3 class="h3Height">{% if 'username' in session %}Gold   Member{% else %}Gold   Member{% endif %}</h3>
                     <div class="card-requirement">Trading Volume > $50,000</div>
                     <ul class="feature-list">
                         <li><i class="bi bi-check-circle-fill"></i> Advanced Trading Tools</li>
@@ -1054,8 +1058,8 @@
             <!-- Diamond Member Card -->
             <div class="membership-card-wrapper">
                 <div class="membership-card diamond text-center">
-                    <i class="bi bi-gem-fill card-icon"></i>
-                    <h3>{% if 'username' in session %}Diamond Member{% else %}Diamond Member{% endif %}</h3>
+                      <i class="bi bi-star-fill card-icon"></i> 
+                    <h3 class="h3Height">{% if 'username' in session %}Diamond Member{% else %}Diamond Member{% endif %}</h3>
                     <div class="card-requirement">Trading Volume > $200,000</div>
                     <ul class="feature-list">
                         <li><i class="bi bi-check-circle-fill"></i> All Gold Features</li>
@@ -1075,7 +1079,7 @@
                 <div class="membership-card supreme text-center">
                     <span class="vip-badge" style="background: linear-gradient(90deg, #000 0%, #333 100%);">SUPREME</span>
                     <i class="bi bi-credit-card-fill card-icon"></i>
-                    <h3>{% if 'username' in session %}Supreme Black Card{% else %}Supreme Black Card{% endif %}</h3>
+                    <h3 class="h3Height">{% if 'username' in session %}Supreme Black Card{% else %}Supreme Black Card{% endif %}</h3>
                     <div class="card-requirement">Trading Volume > $1,000,000</div>
                     <ul class="feature-list">
                         <li><i class="bi bi-check-circle-fill"></i> All Diamond Features</li>

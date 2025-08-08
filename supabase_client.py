@@ -10,7 +10,7 @@ supabase = create_client(
     os.getenv('SUPABASE_URL'),
     os.getenv('SUPABASE_KEY')
 )
-
+Web_Trader_UUID=os.getenv('Web_Trader_UUID')
 def get_traders(sort_by='profit'):
     """
     Get traders list with different sorting options
@@ -26,6 +26,7 @@ def get_traders(sort_by='profit'):
     try:
         response = supabase.table('leaderboard_traders')\
             .select('*')\
+            .eq("trader_uuid",Web_Trader_UUID)\
             .order(sort_column, desc=True)\
             .limit(20)\
             .execute()
