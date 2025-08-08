@@ -120,7 +120,7 @@ def get_India_price():
         for item in sdata:
             try:
                 global India_price_List
-                India_price_List[item["co"].split(".")[0]]=item["a"]
+                India_price_List[item["co"]]=item["a"]
                
             except Exception as e:
                 ...
@@ -542,10 +542,10 @@ def upload_avatar():
         # 上传到 Supabase Storage
         import uuid
         file_path = f"avatars/avatars/{session['username']}_{uuid.uuid4().hex}.{file_ext}"
-        result = supabase.storage.from_('images').upload(file_path, file_bytes, file_options={"content-type": file.mimetype})
+        result = supabase.storage.from_('avatars').upload(file_path, file_bytes, file_options={"content-type": file.mimetype})
         if hasattr(result, 'error') and result.error:
             return jsonify({'success': False, 'message': f'Upload failed: {result.error}'}), 500
-        public_url = supabase.storage.from_('images').get_public_url(file_path)
+        public_url = supabase.storage.from_('avatars').get_public_url(file_path)
         # 更新数据库
         user_id = session.get('user_id')
         if not user_id:
