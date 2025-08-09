@@ -1341,11 +1341,13 @@
                         </div>
                          <div class="mb-3">
                             <label class="form-label">followers count</label>
-                            <input type="number" class="form-control" id="followers_count" name="followers_count" required>
+                            <input type="number" class="form-control" id="followers_count" name="followers_count" min="0" max="2147483647" required>
+                            <div class="form-text text-muted">Maximum value: 2,147,483,647</div>
                         </div>
                          <div class="mb-3">
                             <label class="form-label">likes count</label>
-                            <input type="number" class="form-control" id="likes_count" name="likes_count" required>
+                            <input type="number" class="form-control" id="likes_count" name="likes_count" min="0" max="2147483647" required>
+                            <div class="form-text text-muted">Maximum value: 2,147,483,647</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Trades</label>
@@ -2354,6 +2356,22 @@
         // 保存排行榜记录（添加或编辑）
         function saveLeaderboardRecord() {
             const id = document.getElementById('leaderboardId').value;
+            
+            // 验证数值范围
+            const followersCount = parseInt(document.getElementById('followers_count').value);
+            const likesCount = parseInt(document.getElementById('likes_count').value);
+            const maxIntValue = 2147483647;
+            
+            if (followersCount > maxIntValue) {
+                alert(`粉丝数超出最大值限制 (${maxIntValue.toLocaleString()})`);
+                return;
+            }
+            
+            if (likesCount > maxIntValue) {
+                alert(`点赞数超出最大值限制 (${maxIntValue.toLocaleString()})`);
+                return;
+            }
+            
             const data = {
                 profile_image_url: document.getElementById('profileImageUrl').value,
                 trader_name: document.getElementById('traderName').value,
@@ -2362,8 +2380,8 @@
                 monthly_profit: parseFloat(document.getElementById('monthlyProfit').value),
                 win_rate: parseFloat(document.getElementById('winRate').value),
                 total_trades: parseInt(document.getElementById('totalTrades').value),
-                followers_count: parseInt(document.getElementById('followers_count').value),
-                likes_count: parseInt(document.getElementById('likes_count').value)
+                followers_count: followersCount,
+                likes_count: likesCount
             };
             
             let method = 'POST';
