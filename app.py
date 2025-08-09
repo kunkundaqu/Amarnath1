@@ -4211,7 +4211,7 @@ def generate_stock_recommendations(sector, style, risk, time_horizon):
             return []
         selected_symbols = random.sample(available_symbols, min(6, len(available_symbols)))
     
-            print(f"[DEBUG] Analyzing stocks: {selected_symbols}")
+    print(f"[DEBUG] Analyzing stocks: {selected_symbols}")
     
     recommendations = []
     for symbol in selected_symbols:
