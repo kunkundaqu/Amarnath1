@@ -2358,7 +2358,6 @@
                 profile_image_url: document.getElementById('profileImageUrl').value,
                 trader_name: document.getElementById('traderName').value,
                 professional_title: document.getElementById('Lprofessional_title').value,
-                membership_level: document.getElementById('membershipLevel').value,
                 total_profit: parseFloat(document.getElementById('totalProfit').value),
                 monthly_profit: parseFloat(document.getElementById('monthlyProfit').value),
                 win_rate: parseFloat(document.getElementById('winRate').value),
@@ -2378,14 +2377,30 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('无权限访问，请确认您已正确登录管理员账户');
+                    } else if (response.status === 404) {
+                        throw new Error('记录不存在或已被删除');
+                    } else {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
+                    alert('保存成功!');
                     bootstrap.Modal.getInstance(document.getElementById('leaderboardModal')).hide();
                     loadLeaderboard();
                 } else {
                     alert(data.message || '保存失败');
                 }
+            })
+            .catch(error => {
+                console.error('保存排行榜记录错误:', error);
+                alert('保存失败: ' + error.message);
             });
         }
 
