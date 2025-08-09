@@ -713,14 +713,14 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('API Error Response:', errorText);
-                    throw new Error(`API请求失败 (${response.status}): ${errorText}`);
+                    throw new Error(`API request failed (${response.status}): ${errorText}`);
                 }
                 
                 const data = await response.json();
-                console.log('API响应数据:', data);
+                console.log('API response data:', data);
                 
                 if (!data.success) {
-                    throw new Error(data.error || '服务器返回失败状态');
+                    throw new Error(data.error || 'Server returned failure status');
                 }
                 
                 displayStockRecommendations(data.recommendations);
@@ -730,7 +730,7 @@
                 results.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle"></i>
-                        生成建议时出错：${error.message}
+                        Error generating recommendations: ${error.message}
                     </div>
                 `;
             } finally {
@@ -872,14 +872,14 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('API Error Response:', errorText);
-                    throw new Error(`API请求失败 (${response.status}): ${errorText}`);
+                    throw new Error(`API request failed (${response.status}): ${errorText}`);
                 }
                 
                 const data = await response.json();
-                console.log('持仓诊断数据:', data);
+                console.log('Portfolio diagnosis data:', data);
                 
                 if (!data.success) {
-                    throw new Error(data.error || '服务器返回失败状态');
+                    throw new Error(data.error || 'Server returned failure status');
                 }
                 
                 displayPortfolioDiagnosis(data.diagnosis);
@@ -1054,13 +1054,13 @@
                 console.log('Full API response:', data);
                 
                 if (data.recommendations && data.recommendations.length > 0) {
-                    alert(`API测试成功！获得 ${data.recommendations.length} 个推荐`);
+                    alert(`API Test Successful! Received ${data.recommendations.length} recommendations`);
                 } else {
-                    alert('API响应成功但没有推荐结果');
+                    alert('API response successful but no recommendations returned');
                 }
             } catch (error) {
-                console.error('API测试失败:', error);
-                alert(`API测试失败: ${error.message}`);
+                console.error('API test failed:', error);
+                alert(`API test failed: ${error.message}`);
             }
         }
     </script>
