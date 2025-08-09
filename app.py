@@ -2626,18 +2626,29 @@ def manage_leaderboard():
                 
             update_data = {
                 'trader_name': data.get('trader_name'),
-                'professional_title':data.get('professional_title'),
+                'professional_title': data.get('professional_title'),
                 'total_profit': data.get('total_profit'),
+                'monthly_profit': data.get('monthly_profit'),
                 'win_rate': data.get('win_rate'),
                 'total_trades': data.get('total_trades'),
-                 'followers_count': data['followers_count'],
-                'likes_count': data['likes_count'],
+                'followers_count': data.get('followers_count'),
+                'likes_count': data.get('likes_count'),
                 'profile_image_url': data.get('profile_image_url'),
                 'updated_at': datetime.now(pytz.UTC).isoformat()
             }
             
             response = supabase.table('leaderboard_traders').update(update_data).eq('id', record_id).execute()
             
+            # Check if update was successful
+            if hasattr(response, 'error') and response.error:
+                print(f"[ERROR] Leaderboard update failed: {response.error}")
+                return jsonify({'success': False, 'message': f'Update failed: {response.error}'}), 500
+            
+            if not response.data:
+                print(f"[ERROR] No records updated for ID: {record_id}")
+                return jsonify({'success': False, 'message': 'No records were updated. Record may not exist.'}), 404
+            
+            print(f"[DEBUG] Leaderboard record {record_id} updated successfully")
             return jsonify({
                 'success': True,
                 'message': 'Leaderboard record updated successfully'
@@ -2656,7 +2667,8 @@ def manage_leaderboard():
             })
             
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Operation failed'}), 500
+        print(f"[ERROR] Leaderboard management error: {str(e)}")
+        return jsonify({'success': False, 'message': f'Operation failed: {str(e)}'}), 500
 
 # --- 交易记录表自动建表 ---
 def init_trading_db():
