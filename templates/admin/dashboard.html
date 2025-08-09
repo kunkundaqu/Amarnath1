@@ -2310,7 +2310,7 @@
                                 <td class="text-end">${trader.win_rate?.toFixed(2) || '0.00'}%</td>
                                 <td class="text-end">${trader.total_trades || 0}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info me-1" onclick="showEditLeaderboardModal('${trader.id}', '${trader.profile_image_url}', '${trader.trader_name}', '${trader.professional_title}', '${trader.membership_level}', ${trader.total_profit}, ${trader.monthly_profit}, ${trader.win_rate}, ${trader.total_trades}, ${trader.likes_count}, ${trader.followers_count})">
+                                    <button class="btn btn-sm btn-info me-1" onclick="showEditLeaderboardModal('${trader.id}', '${trader.profile_image_url}', '${trader.trader_name}', '${trader.professional_title}', '${trader.membership_level}', ${trader.total_profit}, ${trader.monthly_profit}, ${trader.win_rate}, ${trader.total_trades}, ${trader.followers_count}, ${trader.likes_count})">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                   
@@ -2337,7 +2337,7 @@
         }
 
         // 显示编辑排行榜记录模态框
-        function showEditLeaderboardModal(id, profileImageUrl, traderName,professional_title, membershipLevel, totalProfit, monthlyProfit, winRate, totalTrades,likes_count,followers_count) {
+        function showEditLeaderboardModal(id, profileImageUrl, traderName,professional_title, membershipLevel, totalProfit, monthlyProfit, winRate, totalTrades,followers_count,likes_count) {
             document.getElementById('leaderboardModalTitle').textContent = '编辑排行榜记录';
             document.getElementById('leaderboardId').value = id;
             document.getElementById('profileImageUrl').value = profileImageUrl;
