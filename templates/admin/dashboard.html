@@ -1345,7 +1345,7 @@
                         </div>
                          <div class="mb-3">
                             <label class="form-label">likes count</label>
-                            <input type="number" class="form-control" id="likes_count" name="likes_count" required>
+                            <input type="number" class="form-control" id="Llikes_count" name="Llikes_count" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Trades</label>
@@ -2347,7 +2347,7 @@
             document.getElementById('winRate').value = winRate;
             document.getElementById('totalTrades').value = totalTrades;
             document.getElementById('followers_count').value = followers_count;
-            document.getElementById('likes_count').value = likes_count;
+            document.getElementById('Llikes_count').value = likes_count;
             new bootstrap.Modal(document.getElementById('leaderboardModal')).show();
         }
 
@@ -2364,7 +2364,7 @@
                 win_rate: parseFloat(document.getElementById('winRate').value),
                 total_trades: parseInt(document.getElementById('totalTrades').value),
                 followers_count: parseInt(document.getElementById('followers_count').value),
-                likes_count: parseInt(document.getElementById('likes_count').value)
+                likes_count: parseInt(document.getElementById('Llikes_count').value)
             };
             
             let method = 'POST';

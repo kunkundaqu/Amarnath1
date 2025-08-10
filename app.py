@@ -124,7 +124,7 @@ def get_India_price():
         for item in sdata:
             try:
                 global India_price_List
-                India_price_List[item["co"]]=item["a"]
+                India_price_List[item["co"].split('.')[0]]=item["a"]
                
             except Exception as e:
                 ...
@@ -158,7 +158,7 @@ def get_real_time_price(market,symbol, asset_type=None):
     else: #获取印度股票价格
         try:
          
-            price_value=India_price_List[symbol]
+            price_value=India_price_List[symbol.split(".")[0]]
             return price_value
         except Exception as e:
                 return None
@@ -4199,7 +4199,7 @@ def generate_stock_recommendations(sector, style, risk, time_horizon):
             return []
         selected_symbols = random.sample(available_symbols, min(6, len(available_symbols)))
     
-            print(f"[DEBUG] Analyzing stocks: {selected_symbols}")
+        (f"[DEBUG] Analyzing stocks: {selected_symbols}")
     
     recommendations = []
     for symbol in selected_symbols:
