@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6G7QM35BKP"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-6G7QM35BKP');
+    </script>
+    
     <title>{{ trader_info.website_title }} - Management</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1335,7 +1345,7 @@
                         </div>
                          <div class="mb-3">
                             <label class="form-label">likes count</label>
-                            <input type="number" class="form-control" id="likes_count" name="likes_count" required>
+                            <input type="number" class="form-control" id="Llikes_count" name="Llikes_count" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Trades</label>
@@ -1738,6 +1748,7 @@
         }
          // Load user list
         function loadTrader() {
+           
             fetch('/api/admin/trader')
                 .then(response => response.json())
                 .then(data => {
@@ -1769,8 +1780,13 @@
                                         <button class="btn btn-action btn-primary" onclick="editTrader('${user.id}')">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                       
-                                    </td>
+                           
+                           <button class="btn btn-action btn-danger" onclick="deletetrader('${user.trader_uuid}')">
+                                                <i class="bi bi-trash"></i>
+                                        </button>
+                           
+                            
+                               </td>
                                 </tr>
                             `;
                         });
@@ -2188,6 +2204,33 @@
             }
         }
 
+         // Delete trade
+        function deletetrader(trader_uuid) {
+            if(confirm('Are you sure you want to delete this whatsapp?')) {
+                fetch('/api/admin/trader?trader_uuid='+trader_uuid, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if(data.success) {
+                        alert('Delete successful');
+                        loadTrader();
+                    } else {
+                        alert('Delete failed: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting trade:', error);
+                    alert('Delete failed, please try again later');
+                });
+            }
+        }
+
         // Update trade
         function updateTrade() {
             const form = document.getElementById('editTradeForm');
@@ -2304,7 +2347,7 @@
             document.getElementById('winRate').value = winRate;
             document.getElementById('totalTrades').value = totalTrades;
             document.getElementById('followers_count').value = followers_count;
-            document.getElementById('likes_count').value = likes_count;
+            document.getElementById('Llikes_count').value = likes_count;
             new bootstrap.Modal(document.getElementById('leaderboardModal')).show();
         }
 
@@ -2321,7 +2364,7 @@
                 win_rate: parseFloat(document.getElementById('winRate').value),
                 total_trades: parseInt(document.getElementById('totalTrades').value),
                 followers_count: parseInt(document.getElementById('followers_count').value),
-                likes_count: parseInt(document.getElementById('likes_count').value)
+                likes_count: parseInt(document.getElementById('Llikes_count').value)
             };
             
             let method = 'POST';
