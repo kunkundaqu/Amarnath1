@@ -2735,11 +2735,7 @@
         }
 
         function showWelcomePopup() {
-            const modal = new bootstrap.Modal(document.getElementById('welcomePopupModal'), {
-                backdrop: 'static',  // Cannot close by clicking background
-                keyboard: false      // Cannot close by pressing ESC
-            });
-            modal.show();
+           
             
             // Load announcement content
             loadAnnouncement();
@@ -2854,6 +2850,11 @@
                             ${announcement.date ? `<div style="text-align: right; margin-top: 0.5rem; color: #999; font-size: 0.8rem;">${formatUSDate(announcement.date)}</div>` : ''}
                         </div>
                     `;
+                const modal = new bootstrap.Modal(document.getElementById('welcomePopupModal'), {
+                backdrop: 'static',  // Cannot close by clicking background
+                keyboard: false      // Cannot close by pressing ESC
+            });
+            modal.show();
                 } else {
                     console.log('No announcement data, using default content');
                     announcementContent.innerHTML = `
