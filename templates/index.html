@@ -2138,7 +2138,7 @@
                         </div>
                         <div class="main-stat-item">
                             <div class="main-stat-label">Market Value</div>
-                            <div class="main-stat-value" id="current-amount-{{ trade.symbol }}">{{ trade.currency }}{{ "%.2f"|format(trade.current_amount) }}</div>
+                            <div class="main-stat-value" id="current-amount-{{ trade.symbol }}">$0.00</div>
                         </div>
                         <div class="main-stat-item">
                             <div class="main-stat-label">P&L Ratio</div>
@@ -2599,7 +2599,7 @@
 
         // Add this script to fetch and update the counts
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api/trader')
+            fetch('/api/trader/')
                 .then(response => response.json())
                 .then(data => {
                     console.log(data)

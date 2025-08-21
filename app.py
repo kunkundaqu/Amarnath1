@@ -376,7 +376,7 @@ def index():
             if trade.get('exit_price'):
                 trade['current_amount'] = trade['exit_price'] * trade['size']*trade['direction']  
             else:
-                trade['current_amount'] = trade['current_price'] * trade['size']*trade['direction']  
+                trade['current_amount'] = trade['current_price'] * trade['size']*trade['direction']
             
             # 计算盈亏
             if trade.get('exit_price'):
@@ -1286,7 +1286,8 @@ def vip():
             if direction>0:
                 total_market_value += current_price * size/exchange_rate
             else:
-                total_market_value += (entry_price+entry_price-current_price) * size/exchange_rate
+                # 空单：当前买入价格 - 当前实时价格 + 买入价格 = 2*买入价格 - 当前实时价格
+                total_market_value += (entry_price + entry_price - current_price) * size/exchange_rate
             holding_cost += entry_price * size
         else:
            
@@ -1298,7 +1299,8 @@ def vip():
     #   if direction>0:
     #             total_market_value += (latest_price or 0) * size / exchange_rate #计算总市值
     #         else:
-    #             total_market_value += (entry_price+entry_price-(latest_price or 0))* size / exchange_rate #计算总市值
+    #             # 空单：当前买入价格 - 当前实时价格 + 买入价格 = 2*买入价格 - 当前实时价格
+    #             total_market_value += (entry_price + entry_price - (latest_price or 0)) * size / exchange_rate #计算总市值
     return render_template(
         'vip.html',
         trader_info=trader_info,
@@ -1392,7 +1394,8 @@ def vip_dashboard():
             if direction>0:
                 total_market_value += (latest_price or 0) * size / exchange_rate #计算总市值
             else:
-                total_market_value += (entry_price+entry_price-(latest_price or 0))* size / exchange_rate #计算总市值
+                # 空单：当前买入价格 - 当前实时价格 + 买入价格 = 2*买入价格 - 当前实时价格
+                total_market_value += (entry_price + entry_price - (latest_price or 0)) * size / exchange_rate #计算总市值
             holding_cost += entry_price * size / exchange_rate #持仓成本
         else:
             profit = (exit_price - entry_price) * size * direction #计算盈利
@@ -2812,9 +2815,16 @@ def get_trader_data():
             .execute()
             
         if response.data:
+            trader_data = response.data
+            # 确保返回前端需要的字段，如果不存在则提供默认值
+            if 'members_count' not in trader_data:
+                trader_data['members_count'] = 0
+            if 'likes_count' not in trader_data:
+                trader_data['likes_count'] = 0
+                
             return jsonify({
                 'success': True,
-                'trader': response.data
+                'trader': trader_data
             })
         else:
             return jsonify({
@@ -2872,7 +2882,7 @@ def like_trader():
                 current_likes = response.data.get('likes_count', 0)
                 updated_likes = current_likes + 1
                 
-                # # Update in database
+                # Update in database
                 supabase.table('trader_profiles')\
                     .update({'likes_count': updated_likes})\
                     .eq('trader_uuid', Web_Trader_UUID)\
