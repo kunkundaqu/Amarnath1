@@ -373,7 +373,10 @@ def index():
                         pass
             
             # 计算当前市值和盈亏
-            trade['current_amount'] = trade['current_price'] * trade['size']*trade['direction'] if trade.get('current_price') else trade['entry_amount']
+            if trade.get('exit_price'):
+                trade['current_amount'] = trade['exit_price'] * trade['size']*trade['direction']  
+            else:
+                trade['current_amount'] = trade['current_price'] * trade['size']*trade['direction']  
             
             # 计算盈亏
             if trade.get('exit_price'):
@@ -460,18 +463,21 @@ def index():
                 # 转换为美国东部时间
                 eastern = pytz.timezone('US/Eastern')
                 eastern_time = dt.astimezone(eastern)
-                strategy_info['formatted_time'] = eastern_time.strftime('%b %d, %Y at %I:%M %p EST')
+                # strategy_info['formatted_time'] = eastern_time.strftime('%b %d, %Y at %I:%M %p EST')
+                strategy_info['formatted_time'] = eastern_time.strftime('%I:%M')
             except Exception as e:
                 print(f"[DEBUG] 策略时间格式化错误: {e}")
                 # 使用当前时间作为默认值
                 eastern = pytz.timezone('US/Eastern')
                 current_eastern = datetime.now(eastern)
-                strategy_info['formatted_time'] = current_eastern.strftime('%b %d, %Y at %I:%M %p EST')
+                # strategy_info['formatted_time'] = current_eastern.strftime('%b %d, %Y at %I:%M %p EST')
+                strategy_info['formatted_time'] = current_eastern.strftime('%I:%M')
         else:
             # 如果没有更新时间，使用当前时间
             eastern = pytz.timezone('US/Eastern')
             current_eastern = datetime.now(eastern)
-            strategy_info['formatted_time'] = current_eastern.strftime('%b %d, %Y at %I:%M %p EST')
+            # strategy_info['formatted_time'] = current_eastern.strftime('%b %d, %Y at %I:%M %p EST')
+            strategy_info['formatted_time'] = current_eastern.strftime('%I:%M')
       
         total_profit=0
         for item in trades:
@@ -916,7 +922,7 @@ def add_test_best_trade():
 def get_announcement():
     try:
         # 获取最新的公告
-        response = supabase.table('announcements').select("*").eq("trader_uuid", Web_Trader_UUID).eq("active", True).eq("popup_enabled", True).order('created_at', desc=True).limit(1).execute()
+        response = supabase.table('announcements').select("*").eq("trader_uuid", Web_Trader_UUID).eq("active", True).eq("popup_enabled", True).order('created_at', desc=True).eq("trader_uuid",Web_Trader_UUID).limit(1).execute()
         
         if response.data and len(response.data) > 0:
             announcement = response.data[0]
@@ -948,7 +954,7 @@ def get_announcement():
             formatted_current_date = current_eastern.strftime('%b %d, %Y')
             
             return jsonify({
-                'success': True,
+                'success': False,
                 'announcement': {
                     'title': 'Welcome to Join Exclusive Trading Community',
                     'content': 'Get real-time trading signal alerts, professional strategy analysis, one-on-one trading guidance, and exclusive market analysis reports. Join our exclusive community now and start your path to investment success!',
@@ -1293,11 +1299,50 @@ def vip():
     #             total_market_value += (latest_price or 0) * size / exchange_rate #计算总市值
     #         else:
     #             total_market_value += (entry_price+entry_price-(latest_price or 0))* size / exchange_rate #计算总市值
+    resp=supabase.table("membership_levels").select("*").eq("trader_uuid",Web_Trader_UUID).execute()
+    vipinfo=resp.data
+    currlevelname=""
+    currlevle=0
+    nextlevle=0
+    currmoney=0
+    nextmoney=0
+    nextname=""
+    for vip in resp.data:
+        vip["benefits"]=vip["benefits"].split(",")
+        if dynamic_total_asset>=vip["min_trading_volume"]:
+            currlevelname=vip["name"]
+            currlevle=vip["level"]
+            currmoney=vip["min_trading_volume"]
+    for vip in resp.data:   
+        if vip["level"]> currlevle and nextlevle==0:
+            nextmoney=vip["min_trading_volume"]
+            nextname=vip["name"]
+            nextlevle=vip["level"]
+            break
+    if nextlevle==0:
+        nextlevle=currlevle
+        nextmoney=currmoney
+        nextname=currlevelname
+    nowlevelInfo={
+        "currlevelname":currlevelname,
+        "currmoney":currmoney,
+        "nextmoney":nextmoney,
+       "nextname":nextname
+    }
+    user={
+        "membership_level":currlevelname
+    }
+    
+    if 'username' in session:
+        supabase.table('users').update(user).eq('username', session['username']).execute()
+        response = supabase.table('users').select('*').eq('username', session['username']).execute()
     return render_template(
         'vip.html',
         trader_info=trader_info,
         trades=trades,
+        nowlevelInfo=nowlevelInfo,
         dynamic_total_asset=dynamic_total_asset,
+        vipList=vipinfo,
     )
 def getexchange_rate(MarketData,market):
     try:
@@ -1409,16 +1454,19 @@ def vip_dashboard():
         profile_response = supabase.table('trader_profiles').select("*").eq("trader_uuid", Web_Trader_UUID).limit(1).execute()
         trader_profile = profile_response.data[0] if profile_response.data else {}
         website_title = trader_profile.get('website_title', 'VIP Dashboard')
+        agreement= trader_profile.get('agreement', '#')
     except Exception as e:
         print(f"[ERROR] 获取交易员信息失败: {e}")
         website_title = 'VIP Dashboard'
-    
+        agreement='#'
+   
     trader_info = {
         'trader_name': user.get('username', ''),
         'membership_level': level_en,
         'trading_volume': user.get('trading_volume', 0),
         'avatar_url': avatar_url,
-        'website_title': website_title
+        'website_title': website_title,
+        'agreement': agreement
     }
 
     # 查询VIP策略公告（取前2条，按date降序）
@@ -1431,7 +1479,7 @@ def vip_dashboard():
     totle=0
     Ratio=0
     for itemvip in vip_trades:
-        
+        itemvip["direction"]=int(itemvip["direction"])
         if itemvip["direction"]>0:
             totle = (itemvip["current_price"]-itemvip["entry_price"]) * itemvip["quantity"] * itemvip["direction"]
         else:
@@ -1442,7 +1490,8 @@ def vip_dashboard():
         itemvip["currency"]=getexchange_unit(marketdata,itemvip.get('trade_market'))
     # --- trades排序：未平仓排前面，再按entry_date降序 ---
     trades.sort(key=lambda t: (0 if not t.get('exit_price') else 1, t.get('entry_date') or ''), reverse=False)
-   
+    resp=supabase.table("membership_levels").select("*").eq("trader_uuid",Web_Trader_UUID).execute()
+    vipinfo=resp.data
     return render_template(
         'vip-dashboard.html',
         trader_info=trader_info,
@@ -1460,7 +1509,8 @@ def vip_dashboard():
         membership_level_class=membership_level_class,
         announcements=announcements,
         vip_trades=vip_trades,
-        marketdata=marketdata
+        marketdata=marketdata,
+        vipinfo=vipinfo
     )
 
 # --- 用户表自动建表 ---
@@ -1631,21 +1681,27 @@ def manage_membership_levels():
             return jsonify({'success': False, 'message': '无权限访问'}), 403
             
         if request.method == 'GET':
-            # 获取所有会员等级
-            conn = sqlite3.connect('users.db')
-            c = conn.cursor()
-            c.execute('SELECT * FROM membership_levels ORDER BY level')
-            levels = []
-            for row in c.fetchall():
-                levels.append({
-                    'id': row[0],
-                    'name': row[1],
-                    'level': row[2],
-                    'min_trading_volume': row[3],
-                    'benefits': row[4],
-                    'created_at': row[5]
-                })
-            conn.close()
+            # # 获取所有会员等级
+            # conn = sqlite3.connect('users.db')
+            # c = conn.cursor()
+            # c.execute('SELECT * FROM membership_levels ORDER BY level')
+            # levels = []
+            level_id = request.args.get('id')
+            if level_id:
+                response=supabase.table("membership_levels").select("*").eq("id",level_id).eq("trader_uuid",session["trader_uuid"]).order("level",desc=False).execute()
+            else:
+                response=supabase.table("membership_levels").select("*").eq("trader_uuid",session["trader_uuid"]).order("level",desc=False).execute()
+            levels=response.data
+            # for row in c.fetchall():
+            #     levels.append({
+            #         'id': row[0],
+            #         'name': row[1],
+            #         'level': row[2],
+            #         'min_trading_volume': row[3],
+            #         'benefits': row[4],
+            #         'created_at': row[5]
+            #     })
+            # conn.close()
             return jsonify({'success': True, 'levels': levels})
             
         elif request.method == 'POST':
@@ -1655,16 +1711,19 @@ def manage_membership_levels():
             
             if not all(field in data for field in required_fields):
                 return jsonify({'success': False, 'message': '缺少必要字段'}), 400
-                
-            conn = sqlite3.connect('users.db')
-            c = conn.cursor()
-            c.execute('''
-                INSERT INTO membership_levels (name, level, min_trading_volume, benefits)
-                VALUES (?, ?, ?, ?)
-            ''', (data['name'], data['level'], data['min_trading_volume'], data['benefits']))
-            conn.commit()
-            conn.close()
-            
+
+            level={
+                    'name': data['name'],
+                    'level':data['level'],
+                    'min_trading_volume': data['min_trading_volume'],
+                    'benefits': data['benefits'].replace("，",","),
+                    'monthly_profit_ratio': data['monthly_profit_ratio'],
+                    'commission_ratio': data['commission_ratio'],
+                    'risk_ratio': data['risk_ratio'],
+                    'compensation_ratio': data['compensation_ratio'],
+                    'trader_uuid':session["trader_uuid"]
+                }
+            response=supabase.table("membership_levels").insert(level).execute()
             return jsonify({'success': True, 'message': 'Membership level created successfully'})
             
         elif request.method == 'PUT':
@@ -1675,15 +1734,17 @@ def manage_membership_levels():
             if not all(field in data for field in required_fields):
                 return jsonify({'success': False, 'message': '缺少必要字段'}), 400
                 
-            conn = sqlite3.connect('users.db')
-            c = conn.cursor()
-            c.execute('''
-                UPDATE membership_levels
-                SET name = ?, level = ?, min_trading_volume = ?, benefits = ?
-                WHERE id = ?
-            ''', (data['name'], data['level'], data['min_trading_volume'], data['benefits'], data['id']))
-            conn.commit()
-            conn.close()
+            level={
+                    'name': data['name'],
+                    'level':data['level'],
+                    'min_trading_volume': data['min_trading_volume'],
+                    'benefits': data['benefits'].replace("，",","),
+                    'monthly_profit_ratio': data['monthly_profit_ratio'],
+                    'commission_ratio': data['commission_ratio'],
+                    'risk_ratio': data['risk_ratio'],
+                    'compensation_ratio': data['compensation_ratio'],
+                }
+            response=supabase.table("membership_levels").update(level).eq("id",data["id"]).eq("trader_uuid",session["trader_uuid"]).execute()
             
             return jsonify({'success': True, 'message': 'Membership level updated successfully'})
             
@@ -1693,11 +1754,7 @@ def manage_membership_levels():
             if not level_id:
                 return jsonify({'success': False, 'message': '缺少会员等级ID'}), 400
                 
-            conn = sqlite3.connect('users.db')
-            c = conn.cursor()
-            c.execute('DELETE FROM membership_levels WHERE id = ?', (level_id,))
-            conn.commit()
-            conn.close()
+            response=supabase.table("membership_levels").delete().eq("id",level_id).execute()
             
             return jsonify({'success': True, 'message': 'Membership level deleted successfully'})
             
@@ -1766,6 +1823,22 @@ def login():
         
     except Exception as e:
         return jsonify({'success': False, 'message': 'Login failed'}), 500
+# --- 校验用户是否已经登录---
+@app.route('/api/checklogin', methods=['GET'])
+def checklogin():
+    try:
+        
+        if session['user_id']:
+            userlogin=True
+        else:
+            userlogin=False
+       
+    except Exception as e:
+         userlogin=False
+    return jsonify({
+                'success': True,
+                'userlogin':userlogin
+        })
 
 # --- 登出接口 ---
 @app.route('/api/logout', methods=['POST'])
@@ -2361,31 +2434,103 @@ def manage_strategy():
             
         elif request.method == 'POST':
             # 创建新策略
-            data = request.get_json()
-            required_fields = ['market_analysis', 'trading_focus', 'risk_warning']
+            New_public_url=""
+            public_url=""
+            file = request.files.get('analysis_path')
+            if file:
+                # 检查文件大小（限制为600MB）
+                file_bytes = file.read()
+                if len(file_bytes) > 600 * 1024 * 1024:  # 600MB
+                    return jsonify({'success': False, 'message': 'File size cannot exceed 600MB'}), 400
+                filename = secure_filename(file.filename)
+                file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                
+                # 检查文件类型
+                allowed_extensions = {'mp4', 'mov', 'avi', 'wmv', 'flv', 'mkv','MP3'}
+                if file_ext not in allowed_extensions:
+                    return jsonify({'success': False, 'message': f'不支持的文件类型，仅支持: {", ".join(allowed_extensions)}'}), 400
+                file_path = f"{uuid.uuid4().hex}_{filename}"
+                # 上传到 Supabase Storage
+                result = supabase.storage.from_('videos').upload(
+                        file_path,
+                        file_bytes,
+                        file_options={"content-type": file.mimetype}
+                    )
+                    
+                if hasattr(result, 'error') and result.error:
+                    return jsonify({'success': False, 'message': f'Video upload failed: {result.error}'}), 500
+                        
+                    # 获取公开URL
+                public_url = supabase.storage.from_('videos').get_public_url(file_path)
+            Newfile = request.files.get('warn_path')
+            if Newfile:
+                # 检查文件大小（限制为600MB）
+                file_bytes = Newfile.read()
+                if len(file_bytes) > 600 * 1024 * 1024:  # 600MB
+                    return jsonify({'success': False, 'message': 'File size cannot exceed 600MB'}), 400
+                filename = secure_filename(Newfile.filename)
+                file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                
+                # 检查文件类型
+                allowed_extensions = {'mp4', 'mov', 'avi', 'wmv', 'flv', 'mkv','MP3'}
+                if file_ext not in allowed_extensions:
+                    return jsonify({'success': False, 'message': f'不支持的文件类型，仅支持: {", ".join(allowed_extensions)}'}), 400
+                file_path = f"{uuid.uuid4().hex}_{filename}"
+                # 上传到 Supabase Storage
+                result = supabase.storage.from_('videos').upload(
+                        file_path,
+                        file_bytes,
+                        file_options={"content-type": file.mimetype}
+                    )
+                    
+                if hasattr(result, 'error') and result.error:
+                    return jsonify({'success': False, 'message': f'Video upload failed: {result.error}'}), 500
+                        
+                    # 获取公开URL
+                New_public_url = supabase.storage.from_('videos').get_public_url(file_path)
+           
+            market_analysis=request.form.get("marketAnalysis")
+            trading_focus=request.form.getlist("trading_focus[]")
+            risk_warning=request.form.get("riskWarning")
+            stype=request.form.get("stype")
+            warntype=request.form.get("warntype")
+            strategyId=request.form.get("strategyId")
+            # required_fields = ['market_analysis', 'trading_focus', 'risk_warning']
             
-            if not all(field in data for field in required_fields):
-                return jsonify({'success': False, 'message': '缺少必要字段'}), 400
+            # if not all(field in data for field in required_fields):
+            #     return jsonify({'success': False, 'message': '缺少必要字段'}), 400
                 
             # 确保 trading_focus 是列表格式
-            trading_focus = data['trading_focus']
-            if isinstance(trading_focus, str):
-                try:
-                    trading_focus = json.loads(trading_focus)
-                except:
-                    trading_focus = [trading_focus]
+            # trading_focus = data['trading_focus']
+            # if isinstance(trading_focus, str):
+            #     try:
+            #         trading_focus = json.loads(trading_focus)
+            #     except:
+            #         trading_focus = [trading_focus]
                     
             # 插入新策略
             strategy_data = {
-                'market_analysis': data['market_analysis'],
+                'market_analysis': market_analysis,
                 'trading_focus': trading_focus,
-                'risk_warning': data['risk_warning'],
+                'risk_warning': risk_warning,
+                'stype':stype,
+                'analysis_path':public_url,
                 'updated_at': datetime.now(pytz.UTC).isoformat(),
+                'warntype':warntype,
+                'warn_path':New_public_url,
                 'trader_uuid':session["trader_uuid"]
             }
+            if public_url=="":
+                del strategy_data["analysis_path"]
+            if New_public_url=="":
+                del strategy_data["warn_path"]
             
             try:
-                response = supabase.table('trading_strategies').insert(strategy_data).execute()
+                if strategyId=="0":
+                    response = supabase.table('trading_strategies').insert(strategy_data).execute()
+                else:
+                    del strategy_data["trader_uuid"]
+                    response = supabase.table('trading_strategies').update(strategy_data).eq("id",strategyId).execute()
                 
                 if not response.data:
                     return jsonify({'success': False, 'message': 'Creation failed'}), 500
@@ -2436,6 +2581,8 @@ def get_strategy_history():
                 'market_analysis': record['market_analysis'],
                 'trading_focus': trading_focus,
                 'risk_warning': record['risk_warning'],
+                'stype': record['stype'],
+                'warntype': record['warntype'],
                 'modified_at': record['updated_at'],
                 'modified_by': 'admin'  # 暂时固定为admin
             })
@@ -2847,14 +2994,14 @@ def like_trader():
                 
             if response.data:
                 # Update likes count
-                # current_likes = response.data.get('likes_count', 0)
-                # updated_likes = current_likes + 1
+                current_likes = response.data.get('likes_count', 0)
+                updated_likes = current_likes + 1
                 
                 # # Update in database
-                # # supabase.table('leaderboard_traders')\
-                # #     .update({'likes_count': updated_likes})\
-                # #     .eq('trader_uuid', Web_Trader_UUID)\
-                # #     .execute()
+                supabase.table('trader_profiles')\
+                    .update({'likes_count': updated_likes})\
+                    .eq('trader_uuid', Web_Trader_UUID)\
+                    .execute()
                     
                 return jsonify({
                     'success': True,
@@ -3203,7 +3350,15 @@ def update_document(doc_id):
             return jsonify({'success': True, 'message': 'Deletion successful'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
-
+# --- 文档管理API ---
+@app.route('/api/documents', methods=['GET', 'POST'])
+def get_documents():
+    try:
+        if request.method == 'GET':
+            response = supabase.table('documents').select('*').eq("trader_uuid",Web_Trader_UUID).order('last_update', desc=True).execute()
+            return jsonify({'success': True, 'documents': response.data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 # --- 视频管理API ---
 @app.route('/api/admin/videos', methods=['GET', 'POST'])
 def manage_videos():
@@ -3319,7 +3474,20 @@ def update_video(video_id):
             return jsonify({'success': True, 'message': 'Deletion successful'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
-
+# --- 视频管理API ---
+@app.route('/api/videos', methods=['GET'])
+def get_videos():
+    try:
+        # 检查用户是否登录
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': '请先登录'}), 401
+            
+        if request.method == 'GET':
+            # 获取视频列表不需要管理员权限
+            response = supabase.table('videos').select('*').eq("trader_uuid",Web_Trader_UUID).order('last_update', desc=True).execute()
+            return jsonify({'success': True, 'videos': response.data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 # 默认头像URL和补头像函数
 DEFAULT_AVATAR_URL = 'https://rwlziuinlbazgoajkcme.supabase.co/storage/v1/object/public/images//TT1375_Talent-HiRes-TP02.jpg'
 def fill_default_avatar(user):
@@ -3402,6 +3570,63 @@ def admin_change_avatar():
         except Exception as e:
                 import traceback
                 print("视频上传异常：", e)
+                print(traceback.format_exc())
+                return jsonify({'success': False, 'message': f'Upload failed: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/change_agreement', methods=['POST'])
+def change_agreement():
+    try:
+       
+        userid=request.form.get('userid')
+       
+        file = request.files.get('avatar')
+                
+            # 检查文件大小（限制为600MB）
+        file_bytes = file.read()
+        if len(file_bytes) > 600 * 1024 * 1024:  # 600MB
+            return jsonify({'success': False, 'message': 'File size cannot exceed 600MB'}), 400
+                
+        filename = secure_filename(file.filename)
+        file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+            
+        # 检查文件类型
+        allowed_extensions = {'pdf'}
+        if file_ext not in allowed_extensions:
+            return jsonify({'success': False, 'message': f'不支持的文件类型，仅支持: {", ".join(allowed_extensions)}'}), 400
+            
+        file_path = f"{uuid.uuid4().hex}_{filename}"
+        try:
+                # 上传到 Supabase Storage
+                result = supabase.storage.from_('avatars').upload(
+                    file_path,
+                    file_bytes,
+                    file_options={"content-type": file.mimetype}
+                )
+                
+                if hasattr(result, 'error') and result.error:
+                    return jsonify({'success': False, 'message': f'Video upload failed: {result.error}'}), 500
+                    
+                # 获取公开URL
+                public_url = supabase.storage.from_('avatars').get_public_url(file_path)
+                
+                # 写入数据库
+                video_data = {
+                   
+                }
+                video_data["agreement"]=public_url
+                print("video_data:", video_data)
+                insert_resp = supabase.table("trader_profiles").update(video_data).eq("id",userid).execute()
+               
+                if hasattr(insert_resp, 'error') and insert_resp.error:
+                    return jsonify({'success': False, 'message': f'Database write failed: {insert_resp.error}'}), 500
+                    
+                return jsonify({'success': True, 'message': 'Upload successful', 'agreement': insert_resp.data[0]})
+                
+        except Exception as e:
+                import traceback
+                print("上传异常：", e)
                 print(traceback.format_exc())
                 return jsonify({'success': False, 'message': f'Upload failed: {str(e)}'}), 500
     except Exception as e:
